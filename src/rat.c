@@ -1,10 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-
-#define _GNU_SOURCE
+#include "rat.h"
 
 struct flags {
   char *cmd;
@@ -53,9 +47,10 @@ int parse_flags(int argc, char **argv) {
         initial_flags.modes = optarg;
         break;
       default:
-        fprintf(stderr, "Usage: %s [-m modes] -- cmd [arg...]\n", argv[0]);
-        exit(EXIT_FAILURE);
-        break;
+        printf("%d %s\n", optind, argv[optind]);
+        // fprintf(stderr, "Usage: %s [-m modes] -- cmd [arg...]\n", argv[0]);
+        // exit(EXIT_FAILURE);
+        // break;
     }
   }
 
@@ -70,11 +65,55 @@ int parse_flags(int argc, char **argv) {
   initial_flags.cmd = join_strings(argv + 1);
 }
 
+void *write_to_stream(void *sptr) {
+  Stream *s = (Stream*)sptr;
+  Strbuf *sb = new_strbuf("");
+
+  ssize_t n;
+  char buf[128];
+
+  StreamReader *sr = new_stream_reader(s);
+
+  while ((n = stream_reader_read(sr, buf, 127))) {
+    buf[n] = '\0';
+    strbuf_write(sb, buf);
+  }
+
+  fprintf(stderr, "got: '%s'\n", sb->str);
+
+  free_strbuf(sb);
+  free_stream_reader(sr);
+}
+
+
 int main(int argc, char **argv) {
   parse_flags(argc, argv);
 
-  printf("modes: '%s'\n", initial_flags.modes);
-  printf("cmd: '%s'\n", initial_flags.cmd);
+  // setlocale(LC_ALL, "");
+  // initscr();
+  // cbreak();
+  // noecho();
+
+  Stream *s = new_stream();
+  stream_write(s, "1234");
+
+  pthread_t threads[20];
+
+  for (int i = 0; i < 20; i++) {
+    pthread_create(&threads[i], NULL, write_to_stream, s);
+  }
+
+  stream_write(s, "567890");
+  stream_write(s, "1234567890");
+  stream_close(s);
+
+  for (int i = 0; i < 20; i++) {
+    pthread_join(threads[i], NULL);
+  }
+
+  free_stream(s);
+
+  // endwin();
 
   return EXIT_SUCCESS;
 }
