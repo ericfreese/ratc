@@ -39,12 +39,30 @@ typedef struct stream_reader {
 
 StreamReader *new_stream_reader(Stream *stream);
 void free_stream_reader(StreamReader *sr);
-ssize_t stream_reader_read(StreamReader *sr, char *buf, size_t nbyte);
+size_t stream_reader_read(StreamReader *sr, char *buf, size_t nbyte);
+
+typedef struct line_ends {
+  size_t *offsets;
+  size_t len;
+  size_t size;
+} LineEnds;
+
+LineEnds *new_line_ends();
+void free_line_ends(LineEnds *le);
+void push_line_end(LineEnds *le, size_t offset);
 
 typedef struct buffer {
+  int fd;
   Stream *stream;
+  LineEnds *line_ends;
+
+  pthread_t fill_thread;
   pthread_mutex_t lock;
 } Buffer;
+
+Buffer *new_buffer(int fd);
+void free_buffer(Buffer *b);
+void *fill_buffer(void *bptr);
 
 #endif
 

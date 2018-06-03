@@ -53,9 +53,9 @@ void free_stream_reader(StreamReader *sr) {
   free(sr);
 }
 
-
-ssize_t stream_reader_read(StreamReader *sr, char *buf, size_t nbyte) {
-  ssize_t ret;
+// TODO: Allow multiple simultaneous readers
+size_t stream_reader_read(StreamReader *sr, char *buf, size_t nbyte) {
+  size_t ret;
 
   pthread_mutex_lock(&sr->stream->lock);
 
