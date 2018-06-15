@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-typedef struct strbuf {
+typedef struct {
   char *str;
   size_t len;
   size_t size;
@@ -20,7 +20,7 @@ Strbuf *new_strbuf(char *str);
 void free_strbuf(Strbuf *strbuf);
 void strbuf_write(Strbuf *strbuf, char *str);
 
-typedef struct stream {
+typedef struct {
   Strbuf *strbuf;
   int closed;
   pthread_cond_t cond;
@@ -32,7 +32,7 @@ void free_stream(Stream *stream);
 void stream_write(Stream *stream, char *buf);
 size_t stream_close(Stream *stream);
 
-typedef struct stream_reader {
+typedef struct {
   Stream *stream;
   size_t offset;
 } StreamReader;
@@ -41,7 +41,7 @@ StreamReader *new_stream_reader(Stream *stream);
 void free_stream_reader(StreamReader *sr);
 size_t stream_reader_read(StreamReader *sr, char *buf, size_t nbyte);
 
-typedef struct line_ends {
+typedef struct {
   size_t *offsets;
   size_t len;
   size_t size;
@@ -51,7 +51,7 @@ LineEnds *new_line_ends();
 void free_line_ends(LineEnds *le);
 void push_line_end(LineEnds *le, size_t offset);
 
-typedef struct buffer {
+typedef struct {
   int fd;
   Stream *stream;
   LineEnds *line_ends;
