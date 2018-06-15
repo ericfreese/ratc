@@ -1,6 +1,6 @@
 IDIR =include
 CC=gcc
-CFLAGS=-I$(IDIR) -pthread
+CFLAGS=-g -I$(IDIR) -pthread
 
 SDIR=src
 ODIR=$(SDIR)/obj
