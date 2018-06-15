@@ -15,7 +15,8 @@ _OBJ = \
 	buffer.o \
 	lineends.o \
 	strbuf.o \
-	stream.o
+	stream.o \
+	pager.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 

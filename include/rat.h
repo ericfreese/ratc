@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 typedef struct {
   char *str;
@@ -63,6 +64,18 @@ typedef struct {
 Buffer *new_buffer(int fd);
 void free_buffer(Buffer *b);
 void *fill_buffer(void *bptr);
+
+typedef struct {
+  char *cmd;
+  Buffer *buffer;
+  int scroll;
+  int cursor;
+} Pager;
+
+Pager *new_pager(char* cmd);
+void free_pager(Pager *p);
+void render_pager(Pager *p);
+void run_pager_command(Pager *p);
 
 #endif
 

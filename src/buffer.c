@@ -6,6 +6,7 @@ Buffer *new_buffer(int fd) {
   b->fd = fd;
   b->stream = new_stream();
   b->line_ends = new_line_ends();
+  b->lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 
   pthread_create(&b->fill_thread, NULL, fill_buffer, b);
 
@@ -23,22 +24,11 @@ void *fill_buffer(void *bptr) {
   char buf[1025];
   ssize_t n;
 
-  printw("filling buffer...\n");
-  refresh();
-
   while ((n = read(b->fd, buf, 1024)) > 0) {
     buf[n] = '\0';
 
     stream_write(b->stream, buf);
-
-    printw("stream: '%s'\n", b->stream->strbuf->str);
-    refresh();
-
-    sleep(1);
   }
-
-  printw("done filling buffer\n");
-  refresh();
 
   if (n == -1) {
     perror("fill_buffer");
