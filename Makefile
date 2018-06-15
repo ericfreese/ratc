@@ -10,7 +10,13 @@ LIBS=-lncurses
 _DEPS = rat.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = rat.o buffer.o lineends.o strbuf.o stream.o
+_OBJ = \
+	rat.o \
+	buffer.o \
+	lineends.o \
+	strbuf.o \
+	stream.o
+
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
