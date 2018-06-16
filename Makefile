@@ -16,7 +16,8 @@ _OBJ = \
 	lineends.o \
 	strbuf.o \
 	stream.o \
-	pager.o
+	pager.o \
+	input_queue.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 

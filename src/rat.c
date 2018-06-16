@@ -65,19 +65,60 @@ int parse_flags(int argc, char **argv) {
   initial_flags.cmd = join_strings(argv + 1);
 }
 
-void *input_loop(void *fdp) {
-  int fd = *((int*)fdp);
+typedef struct {
+  int fd;
+  InputQueue *q;
+} InputLoopParams;
+
+void *input_loop(void *ilpp) {
+  InputLoopParams *ilp = ((InputLoopParams*)ilpp);
 
   while (1) {
-    getch();
-    write(fd, "f", 1); // TODO: Should non-block?
+    enqueue_input(ilp->q, getch());
+    write(ilp->fd, "f", 1);
+  }
+}
+
+void main_loop(InputQueue *q, int fd) {
+  int done = 0;
+  char dummy[1];
+  int retval;
+
+  struct pollfd input_pfds[1];
+  input_pfds[0].fd = fd;
+  input_pfds[0].events = POLLIN;
+
+  Pager *p = new_pager("git diff --no-color");
+
+  while (!done) {
+    retval = poll(input_pfds, 1, 33);
+
+    if (retval == -1) {
+      // Handle interrupted syscall
+      if (errno == EINTR) {
+        continue;
+      }
+
+      perror("poll");
+      exit(EXIT_FAILURE);
+    } else if (retval && input_pfds[0].revents & POLLIN) {
+      while (read(input_pfds[0].fd, dummy, 1) > 0) {
+        int ch = dequeue_input(q);
+
+        fprintf(stderr, "got input '%s'\n", keyname(ch));
+      }
+
+      if (errno != EAGAIN) {
+        perror("read");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    render_pager(p);
   }
 }
 
 int main(int argc, char **argv) {
-  int fds[2];
-  pthread_t input_thread;
-
   parse_flags(argc, argv);
 
   setlocale(LC_ALL, "");
@@ -85,38 +126,20 @@ int main(int argc, char **argv) {
   cbreak();
   noecho();
 
-  refresh();
+  InputQueue *input_queue = new_input_queue();
+  pthread_t input_thread;
+  InputLoopParams ilp;
+  int input_fds[2];
 
-  Pager *p = new_pager("git diff --no-color");
+  pipe(input_fds);
+  fcntl(input_fds[0], F_SETFL, O_NONBLOCK);
 
-  pipe(fds);
+  ilp.fd = input_fds[1];
+  ilp.q = input_queue;
 
-  pthread_create(&input_thread, NULL, input_loop, &fds[1]);
+  pthread_create(&input_thread, NULL, input_loop, &ilp);
 
-  struct pollfd pfds[1];
-  pfds[0].fd = fds[0];
-  pfds[0].events = POLLIN;
-
-  int done = 0;
-  char foo[1];
-  int retval;
-
-  while (!done) {
-    retval = poll(pfds, 1, 33);
-
-    if (retval == -1) {
-      perror("poll");
-      exit(EXIT_FAILURE);
-    } else if (retval) {
-      if (pfds[0].revents & POLLIN) {
-        read(fds[0], foo, 1);
-      }
-
-      fprintf(stderr, "got input\n");
-    } else {
-      render_pager(p);
-    }
-  }
+  main_loop(input_queue, input_fds[0]);
 
   endwin();
 

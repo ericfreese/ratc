@@ -2,6 +2,7 @@
 #define RAT_H
 
 #include <fcntl.h>
+#include <errno.h>
 #include <locale.h>
 #include <ncurses.h>
 #include <pthread.h>
@@ -10,6 +11,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <poll.h>
+
+typedef struct InputQueueItem InputQueueItem;
+struct InputQueueItem {
+  int ch;
+  InputQueueItem *next;
+};
+
+typedef struct {
+  InputQueueItem *first;
+  InputQueueItem *last;
+} InputQueue;
+
+InputQueue *new_input_queue();
+void enqueue_input(InputQueue *q, int ch);
+int dequeue_input(InputQueue *q);
 
 typedef struct {
   char *str;
