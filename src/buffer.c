@@ -21,18 +21,39 @@ void free_buffer(Buffer *b) {
 
 void *fill_buffer(void *bptr) {
   Buffer *b = (Buffer*)bptr;
-  char buf[1025];
   ssize_t n;
+  Token t;
+  Tokenizer *tr = new_tokenizer(b->fd);
 
-  while ((n = read(b->fd, buf, 1024)) > 0) {
-    buf[n] = '\0';
+  while (1) {
+    t.value = new_strbuf("");
+    n = read_token(tr, &t);
 
-    stream_write(b->stream, buf);
+    switch (t.type) {
+    case TK_NONE:
+      break;
+    case TK_NEWLINE:
+      stream_write(b->stream, "\n");
+      break;
+    case TK_TEXT:
+      stream_write(b->stream, t.value->str);
+      break;
+    case TK_TERMSTYLE:
+      break;
+    }
+
+    free_strbuf(t.value);
+
+    if (n <= 0) {
+      break;
+    }
   }
 
   if (n == -1) {
     perror("fill_buffer");
     exit(EXIT_FAILURE);
   }
+
+  free_tokenizer(tr);
 }
 

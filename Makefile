@@ -18,7 +18,8 @@ _OBJ = \
 	pager.o \
 	rat.o \
 	strbuf.o \
-	stream.o
+	stream.o \
+	tokenizer.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 

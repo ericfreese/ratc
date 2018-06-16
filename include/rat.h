@@ -52,6 +52,26 @@ KeyStack *new_key_stack();
 void key_stack_push(KeyStack *ks, char *key);
 void key_stack_to_strbuf(KeyStack *ks, Strbuf *out);
 
+typedef enum {
+  TK_NONE = 0,
+  TK_TEXT,
+  TK_NEWLINE,
+  TK_TERMSTYLE,
+} TokenType;
+
+typedef struct {
+  TokenType type;
+  Strbuf *value;
+} Token;
+
+typedef struct {
+  int fd;
+} Tokenizer;
+
+Tokenizer *new_tokenizer(int fd);
+void free_tokenizer(Tokenizer *tr);
+ssize_t read_token(Tokenizer *tr, Token *t);
+
 typedef struct {
   Strbuf *strbuf;
   int closed;
