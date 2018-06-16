@@ -2,9 +2,7 @@
 
 InputQueue *new_input_queue() {
   InputQueue *q = (InputQueue*)malloc(sizeof(*q));
-
   q->first = q->last = NULL;
-
   return q;
 }
 

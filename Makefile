@@ -13,6 +13,7 @@ DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 _OBJ = \
 	buffer.o \
 	input_queue.o \
+	key_stack.o \
 	lineends.o \
 	pager.o \
 	rat.o \

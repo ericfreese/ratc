@@ -83,12 +83,14 @@ void main_loop(InputQueue *q, int fd) {
   int done = 0;
   char dummy[1];
   int retval;
+  KeyStack *key_stack = new_key_stack();
 
   struct pollfd input_pfds[1];
   input_pfds[0].fd = fd;
   input_pfds[0].events = POLLIN;
 
   Pager *p = new_pager("git diff --no-color");
+  Strbuf *ks_str;
 
   while (!done) {
     retval = poll(input_pfds, 1, 33);
@@ -104,8 +106,12 @@ void main_loop(InputQueue *q, int fd) {
     } else if (retval && input_pfds[0].revents & POLLIN) {
       while (read(input_pfds[0].fd, dummy, 1) > 0) {
         int ch = dequeue_input(q);
+        key_stack_push(key_stack, (char*)keyname(ch));
 
-        fprintf(stderr, "got input '%s'\n", keyname(ch));
+        Strbuf *sb = new_strbuf("");
+        key_stack_to_strbuf(key_stack, sb);
+        fprintf(stderr, "keystack: '%s'\n", sb->str);
+        free_strbuf(sb);
       }
 
       if (errno != EAGAIN) {

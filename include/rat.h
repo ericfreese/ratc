@@ -12,6 +12,16 @@
 #include <unistd.h>
 #include <poll.h>
 
+typedef struct {
+  char *str;
+  size_t len;
+  size_t size;
+} Strbuf;
+
+Strbuf *new_strbuf(char *str);
+void free_strbuf(Strbuf *strbuf);
+void strbuf_write(Strbuf *strbuf, char *str);
+
 typedef struct InputQueueItem InputQueueItem;
 struct InputQueueItem {
   int ch;
@@ -27,15 +37,20 @@ InputQueue *new_input_queue();
 void enqueue_input(InputQueue *q, int ch);
 int dequeue_input(InputQueue *q);
 
-typedef struct {
-  char *str;
-  size_t len;
-  size_t size;
-} Strbuf;
+typedef struct KeyStackItem KeyStackItem;
+struct KeyStackItem {
+  char *key;
+  KeyStackItem *next;
+};
 
-Strbuf *new_strbuf(char *str);
-void free_strbuf(Strbuf *strbuf);
-void strbuf_write(Strbuf *strbuf, char *str);
+typedef struct {
+  KeyStackItem *first;
+  KeyStackItem *last;
+} KeyStack;
+
+KeyStack *new_key_stack();
+void key_stack_push(KeyStack *ks, char *key);
+void key_stack_to_strbuf(KeyStack *ks, Strbuf *out);
 
 typedef struct {
   Strbuf *strbuf;
