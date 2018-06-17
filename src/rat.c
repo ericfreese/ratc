@@ -90,7 +90,6 @@ void main_loop(InputQueue *q, int fd) {
   input_pfds[0].events = POLLIN;
 
   Pager *p = new_pager("git diff --no-color");
-  Strbuf *ks_str;
 
   while (!done) {
     retval = poll(input_pfds, 1, 33);
