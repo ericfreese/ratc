@@ -66,10 +66,14 @@ typedef struct {
 
 typedef struct {
   int fd;
+  char unread_byte;
+  int was_unread;
 } Tokenizer;
 
 Tokenizer *new_tokenizer(int fd);
 void free_tokenizer(Tokenizer *tr);
+ssize_t read_byte(Tokenizer *tr, char *byte);
+int unread_byte(Tokenizer *tr, char *byte);
 ssize_t read_token(Tokenizer *tr, Token *t);
 
 typedef struct {
