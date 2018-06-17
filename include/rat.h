@@ -54,7 +54,7 @@ void key_stack_to_strbuf(KeyStack *ks, Strbuf *out);
 
 typedef enum {
   TK_NONE = 0,
-  TK_TEXT,
+  TK_CONTENT,
   TK_NEWLINE,
   TK_TERMSTYLE,
 } TokenType;

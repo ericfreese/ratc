@@ -40,7 +40,7 @@ ssize_t read_token(Tokenizer *tr, Token *t) {
     if (buf[0] == '\n') {
       t->type = TK_NEWLINE;
     } else {
-      t->type = TK_TEXT;
+      t->type = TK_CONTENT;
     }
   } else {
     t->type = TK_NONE;
