@@ -33,7 +33,7 @@ void *fill_buffer(void *bptr) {
     case TK_NONE:
       break;
     case TK_NEWLINE:
-      stream_write(b->stream, "\n");
+      stream_write(b->stream, t.value->str);
       break;
     case TK_CONTENT:
       stream_write(b->stream, t.value->str);
