@@ -65,34 +65,19 @@ int parse_flags(int argc, char **argv) {
   initial_flags.cmd = join_strings(argv + 1);
 }
 
-typedef struct {
-  int fd;
-  InputQueue *q;
-} InputLoopParams;
-
-void *input_loop(void *ilpp) {
-  InputLoopParams *ilp = ((InputLoopParams*)ilpp);
-
-  while (1) {
-    enqueue_input(ilp->q, getch());
-    write(ilp->fd, "f", 1);
-  }
-}
-
-void main_loop(InputQueue *q, int fd) {
+void main_loop() {
   int done = 0;
-  char dummy[1];
   int retval;
   KeyStack *key_stack = new_key_stack();
 
-  struct pollfd input_pfds[1];
-  input_pfds[0].fd = fd;
-  input_pfds[0].events = POLLIN;
+  struct pollfd pfds[1];
+  pfds[0].fd = open("/dev/tty", O_RDONLY);
+  pfds[0].events = POLLIN;
 
   Pager *p = new_pager("git diff --no-color");
 
   while (!done) {
-    retval = poll(input_pfds, 1, 33);
+    retval = poll(pfds, 1, 100);
 
     if (retval == -1) {
       // Handle interrupted syscall
@@ -102,21 +87,16 @@ void main_loop(InputQueue *q, int fd) {
 
       perror("poll");
       exit(EXIT_FAILURE);
-    } else if (retval && input_pfds[0].revents & POLLIN) {
-      while (read(input_pfds[0].fd, dummy, 1) > 0) {
-        int ch = dequeue_input(q);
-        key_stack_push(key_stack, (char*)keyname(ch));
+    } else if (retval && pfds[0].revents & POLLIN) {
+      int ch = getch();
+      key_stack_push(key_stack, (char*)keyname(ch));
 
-        Strbuf *sb = new_strbuf("");
-        key_stack_to_strbuf(key_stack, sb);
-        fprintf(stderr, "keystack: '%s'\n", sb->str);
-        free_strbuf(sb);
-      }
+      Strbuf *sb = new_strbuf("");
+      key_stack_to_strbuf(key_stack, sb);
+      fprintf(stderr, "keystack: '%s'\n", sb->str);
+      free_strbuf(sb);
 
-      if (errno != EAGAIN) {
-        perror("read");
-        exit(EXIT_FAILURE);
-      }
+      // TODO: Handle key event
     }
 
     render_pager(p);
@@ -131,20 +111,7 @@ int main(int argc, char **argv) {
   cbreak();
   noecho();
 
-  InputQueue *input_queue = new_input_queue();
-  pthread_t input_thread;
-  InputLoopParams ilp;
-  int input_fds[2];
-
-  pipe(input_fds);
-  fcntl(input_fds[0], F_SETFL, O_NONBLOCK);
-
-  ilp.fd = input_fds[1];
-  ilp.q = input_queue;
-
-  pthread_create(&input_thread, NULL, input_loop, &ilp);
-
-  main_loop(input_queue, input_fds[0]);
+  main_loop();
 
   endwin();
 

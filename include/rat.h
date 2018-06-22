@@ -22,21 +22,6 @@ Strbuf *new_strbuf(char *str);
 void free_strbuf(Strbuf *strbuf);
 void strbuf_write(Strbuf *strbuf, char *str);
 
-typedef struct InputQueueItem InputQueueItem;
-struct InputQueueItem {
-  int ch;
-  InputQueueItem *next;
-};
-
-typedef struct {
-  InputQueueItem *first;
-  InputQueueItem *last;
-} InputQueue;
-
-InputQueue *new_input_queue();
-void enqueue_input(InputQueue *q, int ch);
-int dequeue_input(InputQueue *q);
-
 typedef struct KeyStackItem KeyStackItem;
 struct KeyStackItem {
   char *key;
