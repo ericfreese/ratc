@@ -30,6 +30,8 @@ void *fill_buffer(void *bptr) {
     t.value = new_strbuf("");
     n = read_token(tr, &t);
 
+    pthread_mutex_lock(&b->lock);
+
     switch (t.type) {
     case TK_NONE:
       break;
@@ -42,6 +44,8 @@ void *fill_buffer(void *bptr) {
     case TK_TERMSTYLE:
       break;
     }
+
+    pthread_mutex_unlock(&b->lock);
 
     free_strbuf(t.value);
 
