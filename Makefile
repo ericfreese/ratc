@@ -14,7 +14,7 @@ _OBJ = \
 	buffer.o \
 	input_queue.o \
 	key_stack.o \
-	lineends.o \
+	line_ends.o \
 	pager.o \
 	rat.o \
 	strbuf.o \
