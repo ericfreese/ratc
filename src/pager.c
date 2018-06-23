@@ -29,10 +29,11 @@ void render_pager(Pager *p) {
 
 void run_pager_command(Pager *p) {
   int fds[2];
+  pid_t pid;
 
   pipe(fds);
 
-  switch (fork()) {
+  switch (pid = fork()) {
     case -1:
       perror("fork");
       exit(EXIT_FAILURE);
@@ -43,9 +44,8 @@ void run_pager_command(Pager *p) {
       execl("/bin/zsh", "zsh", "-c", p->cmd);
       perror("execl");
       exit(EXIT_FAILURE);
+    default:
+      close(fds[1]);
+      p->buffer = new_buffer(pid, fds[0]);
   }
-
-  close(fds[1]);
-
-  p->buffer = new_buffer(fds[0]);
 }

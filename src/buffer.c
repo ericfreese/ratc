@@ -1,8 +1,9 @@
 #include "rat.h"
 
-Buffer *new_buffer(int fd) {
+Buffer *new_buffer(pid_t pid, int fd) {
   Buffer *b = (Buffer*)malloc(sizeof(Buffer));
 
+  b->pid = pid;
   b->fd = fd;
   b->stream = new_stream();
   b->line_ends = new_line_ends();
@@ -55,5 +56,7 @@ void *fill_buffer(void *bptr) {
   }
 
   free_tokenizer(tr);
+
+  waitpid(b->pid, NULL, 0);
 }
 

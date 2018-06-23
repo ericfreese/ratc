@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <poll.h>
+#include <sys/wait.h>
 
 typedef struct {
   char *str;
@@ -93,6 +94,7 @@ void free_line_ends(LineEnds *le);
 void push_line_end(LineEnds *le, size_t offset);
 
 typedef struct {
+  pid_t pid;
   int fd;
   Stream *stream;
   LineEnds *line_ends;
@@ -101,7 +103,7 @@ typedef struct {
   pthread_mutex_t lock;
 } Buffer;
 
-Buffer *new_buffer(int fd);
+Buffer *new_buffer(pid_t pid, int fd);
 void free_buffer(Buffer *b);
 void *fill_buffer(void *bptr);
 
