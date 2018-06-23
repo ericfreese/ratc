@@ -19,12 +19,20 @@ void free_pager(Pager *p) {
 }
 
 void render_pager(Pager *p) {
+  char **buffer_lines;
+
   pthread_mutex_lock(&p->buffer->lock);
-
-  mvprintw(0, 0, "%s", p->buffer->stream->strbuf->str);
-  refresh();
-
+  buffer_lines = get_buffer_lines(p->buffer, 0, 10);
   pthread_mutex_unlock(&p->buffer->lock);
+
+  for (int y = 0; buffer_lines[y] != NULL; y++) {
+    mvprintw(y, 0, "%s", buffer_lines[y]);
+    free(buffer_lines[y]);
+  }
+
+  free(buffer_lines);
+
+  refresh();
 }
 
 void run_pager_command(Pager *p) {

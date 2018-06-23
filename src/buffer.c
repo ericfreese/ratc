@@ -37,6 +37,7 @@ void *fill_buffer(void *bptr) {
       break;
     case TK_NEWLINE:
       stream_write(b->stream, t.value->str);
+      push_line_end(b->line_ends, b->stream->strbuf->len);
       break;
     case TK_CONTENT:
       stream_write(b->stream, t.value->str);
@@ -64,3 +65,28 @@ void *fill_buffer(void *bptr) {
   waitpid(b->pid, NULL, 0);
 }
 
+char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
+  if (start >= b->line_ends->len) {
+    num = 0;
+  } else if (start + num > b->line_ends->len) {
+    num = b->line_ends->len - start;
+  }
+
+  char **buffer_lines = (char**)malloc((num + 1) * sizeof(*buffer_lines));
+  size_t start_offset = 0;
+  size_t line_len;
+
+  for (size_t i = 0, *next_offset = b->line_ends->offsets; i < num; i++, next_offset++) {
+    line_len = *next_offset - start_offset;
+
+    buffer_lines[i] = (char*)malloc((line_len + 1) * sizeof(*buffer_lines[i]));
+    memcpy(buffer_lines[i], b->stream->strbuf->str + start_offset, line_len);
+    buffer_lines[i][line_len] = '\0';
+
+    start_offset = *next_offset;
+  }
+
+  buffer_lines[num] = NULL;
+
+  return buffer_lines;
+}

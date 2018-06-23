@@ -106,6 +106,7 @@ typedef struct {
 Buffer *new_buffer(pid_t pid, int fd);
 void free_buffer(Buffer *b);
 void *fill_buffer(void *bptr);
+char **get_buffer_lines(Buffer *b, size_t start, size_t num);
 
 typedef struct {
   char *cmd;
