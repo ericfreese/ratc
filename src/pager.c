@@ -50,7 +50,7 @@ void run_pager_command(Pager *p) {
       dup2(fds[1], STDERR_FILENO);
       close(fds[0]);
       close(fds[1]);
-      execl("/bin/zsh", "zsh", "-c", p->cmd);
+      execl("/bin/zsh", "zsh", "-c", p->cmd, NULL);
       perror("execl");
       exit(EXIT_FAILURE);
     default:
