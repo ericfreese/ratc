@@ -63,6 +63,8 @@ void *fill_buffer(void *bptr) {
   free_tokenizer(tr);
 
   waitpid(b->pid, NULL, 0);
+
+  return NULL;
 }
 
 char **get_buffer_lines(Buffer *b, size_t start, size_t num) {

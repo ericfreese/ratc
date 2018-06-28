@@ -23,9 +23,10 @@ ssize_t read_byte(Tokenizer *tr, char* byte) {
   if (tr->was_unread) {
     *byte = tr->unread_byte;
     tr->was_unread = 0;
-  } else {
-    return read(tr->fd, byte, 1);
+    return 1;
   }
+
+  return read(tr->fd, byte, 1);
 }
 
 ssize_t read_token(Tokenizer *tr, Token *t) {
