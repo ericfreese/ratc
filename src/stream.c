@@ -1,4 +1,4 @@
-#include "rat.h"
+#include "stream.h"
 
 Stream *new_stream() {
   Stream *stream = (Stream*)malloc(sizeof(Stream));

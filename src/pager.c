@@ -1,4 +1,4 @@
-#include "rat.h"
+#include "pager.h"
 
 Pager *new_pager(char *cmd) {
   Pager *p = (Pager*)malloc(sizeof(*p));

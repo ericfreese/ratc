@@ -1,4 +1,4 @@
-#include "rat.h"
+#include "line_ends.h"
 
 LineEnds *new_line_ends() {
   LineEnds *le = (LineEnds*)malloc(sizeof(*le));

@@ -1,4 +1,4 @@
-#include "rat.h"
+#include "strbuf.h"
 
 Strbuf *new_strbuf(char *str) {
   size_t len = strlen(str);

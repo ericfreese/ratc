@@ -1,4 +1,4 @@
-#include "rat.h"
+#include "tokenizer.h"
 
 Tokenizer *new_tokenizer(int fd) {
   Tokenizer *tr = (Tokenizer*)malloc(sizeof(*tr));

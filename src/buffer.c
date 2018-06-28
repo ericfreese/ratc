@@ -1,4 +1,4 @@
-#include "rat.h"
+#include "buffer.h"
 
 Buffer *new_buffer(pid_t pid, int fd) {
   Buffer *b = (Buffer*)malloc(sizeof(Buffer));
