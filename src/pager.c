@@ -37,6 +37,7 @@ void render_pager(Pager *p) {
 
 void run_pager_command(Pager *p) {
   int fds[2];
+  char* shell;
   pid_t pid;
 
   pipe(fds);
@@ -46,11 +47,15 @@ void run_pager_command(Pager *p) {
       perror("fork");
       exit(EXIT_FAILURE);
     case 0:
+      shell = getenv("SHELL");
+
       dup2(fds[1], STDOUT_FILENO);
       dup2(fds[1], STDERR_FILENO);
+
       close(fds[0]);
       close(fds[1]);
-      execl("/bin/zsh", "zsh", "-c", p->cmd, NULL);
+
+      execl(shell, shell, "-c", p->cmd, NULL);
       perror("execl");
       exit(EXIT_FAILURE);
     default:
