@@ -1,51 +1,99 @@
 #include "tokenizer.h"
 
-Tokenizer *new_tokenizer(int fd) {
+Token *new_token(TokenType type, char *value) {
+  Token *t = malloc(sizeof(*t));
+
+  t->type = type;
+  t->value = value;
+
+  return t;
+}
+
+void free_token(Token *t) {
+  if (t->type == TK_CONTENT) {
+    free(t->value);
+  }
+
+  free(t);
+}
+
+Tokenizer *new_tokenizer() {
   Tokenizer *tr = (Tokenizer*)malloc(sizeof(*tr));
-  tr->fd = fd;
+  tr->read_buffer = open_memstream(&tr->read_buffer_str, &tr->read_buffer_len);
   return tr;
 }
 
 void free_tokenizer(Tokenizer *tr) {
+  fclose(tr->read_buffer);
+  free(tr->read_buffer_str);
   free(tr);
 }
 
-int unread_byte(Tokenizer *tr, char *byte) {
-  if (tr->was_unread) {
-    return 1;
+void tokenizer_buffer_input(Tokenizer *tr, char *str, size_t len) {
+  ssize_t n = fwrite(str, sizeof(*str), len, tr->read_buffer);
+
+  if (n < len) {
+    perror("fwrite");
+    exit(EXIT_FAILURE);
   }
 
-  tr->unread_byte = *byte;
-  return 0;
+  fflush(tr->read_buffer);
 }
 
-ssize_t read_byte(Tokenizer *tr, char* byte) {
-  if (tr->was_unread) {
-    *byte = tr->unread_byte;
-    tr->was_unread = 0;
-    return 1;
-  }
-
-  return read(tr->fd, byte, 1);
+int is_content_char(char ch) {
+  return ch != '\x1b' && ch != '\n';
 }
 
-ssize_t read_token(Tokenizer *tr, Token *t) {
-  char buf[2];
+Token *read_content_token(Tokenizer *tr, int first) {
+  int ch;
+  char *val;
+  size_t len;
+  FILE *stream = open_memstream(&val, &len);
 
-  ssize_t n = read_byte(tr, buf);
+  fputc(first, stream);
 
-  if (n > 0) {
-    buf[n] = '\0';
-    strbuf_write(t->value, buf);
+  while (1) {
+    ch = fgetc(tr->read_buffer);
 
-    if (buf[0] == '\n') {
-      t->type = TK_NEWLINE;
-    } else {
-      t->type = TK_CONTENT;
+    if (ch == EOF) {
+      break;
     }
-  } else {
-    t->type = TK_NONE;
+
+    if (!is_content_char((char)ch)) {
+      if (ungetc(ch, tr->read_buffer) == EOF) {
+        perror("ungetc");
+        exit(EXIT_FAILURE);
+      }
+
+      break;
+    }
+
+    if (fputc(ch, stream) == EOF) {
+      perror("fputc");
+      exit(EXIT_FAILURE);
+    }
   }
 
-  return n;
+  fclose(stream);
+
+  return new_token(TK_CONTENT, val);
+}
+
+Token *read_token(Tokenizer *tr) {
+  int ch;
+
+  if ((ch = fgetc(tr->read_buffer)) == EOF) {
+    return NULL;
+  }
+
+  if (ch == '\n') {
+    return new_token(TK_NEWLINE, "\n");
+  } else if (ch == '\x1b') {
+    // TODO: Handle escape sequences
+    return new_token(TK_TERMSTYLE, "\x1b");
+  } else if (is_content_char(ch)) {
+    return read_content_token(tr, ch);
+  } else {
+    return new_token(TK_NONE, "");
+  }
 }

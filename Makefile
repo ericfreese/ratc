@@ -11,13 +11,14 @@ _DEPS = rat.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = \
+	annotate.o \
 	buffer.o \
 	key_stack.o \
 	line_ends.o \
 	pager.o \
+	poll_registry.o \
 	rat.o \
 	strbuf.o \
-	stream.o \
 	tokenizer.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))

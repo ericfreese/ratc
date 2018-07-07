@@ -5,66 +5,67 @@ Buffer *new_buffer(pid_t pid, int fd) {
 
   b->pid = pid;
   b->fd = fd;
-  b->stream = new_stream();
+  b->stream = open_memstream(&b->stream_str, &b->stream_len);
+  b->tr = new_tokenizer(b->fd);
   b->line_ends = new_line_ends();
-  b->lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-
-  pthread_create(&b->fill_thread, NULL, fill_buffer, b);
 
   return b;
 }
 
 void free_buffer(Buffer *b) {
-  free_stream(b->stream);
+  fclose(b->stream);
+  free(b->stream_str);
   free_line_ends(b->line_ends);
+  free_tokenizer(b->tr);
   free(b);
 }
 
-void *fill_buffer(void *bptr) {
-  Buffer *b = (Buffer*)bptr;
+static const size_t BUFFER_READ_LEN = 4096;
+
+int buffer_read(Buffer *b) {
+  char buf[BUFFER_READ_LEN];
   ssize_t n;
-  Token t;
-  Tokenizer *tr = new_tokenizer(b->fd);
+  Token *t;
 
-  while (1) {
-    t.value = new_strbuf("");
-    n = read_token(tr, &t);
-
-    pthread_mutex_lock(&b->lock);
-
-    switch (t.type) {
-    case TK_NONE:
-      break;
-    case TK_NEWLINE:
-      stream_write(b->stream, t.value->str);
-      push_line_end(b->line_ends, b->stream->strbuf->len);
-      break;
-    case TK_CONTENT:
-      stream_write(b->stream, t.value->str);
-      break;
-    case TK_TERMSTYLE:
-      break;
-    }
-
-    pthread_mutex_unlock(&b->lock);
-
-    free_strbuf(t.value);
-
-    if (n <= 0) {
-      break;
-    }
-  }
-
-  if (n == -1) {
-    perror("fill_buffer");
+  if ((n = read(b->fd, buf, BUFFER_READ_LEN)) == -1) {
+    perror("read");
     exit(EXIT_FAILURE);
   }
 
-  free_tokenizer(tr);
+  fprintf(stderr, "read %ld bytes in buffer_read\n", n);
 
-  waitpid(b->pid, NULL, 0);
+  if (n) {
+    tokenizer_buffer_input(b->tr, buf, n);
 
-  return NULL;
+    while ((t = read_token(b->tr)) != NULL) {
+      switch (t->type) {
+      case TK_NEWLINE:
+        fputs(t->value, b->stream);
+        fflush(b->stream);
+        push_line_end(b->line_ends, b->stream_len);
+        break;
+      case TK_CONTENT:
+        fputs(t->value, b->stream);
+        fflush(b->stream);
+        break;
+      case TK_TERMSTYLE:
+        // TODO
+        break;
+      case TK_NONE:
+        break;
+      }
+
+      free_token(t);
+    }
+  } else {
+    waitpid(b->pid, NULL, 0);
+  }
+
+  return n;
+}
+
+void buffer_read_all(Buffer *b) {
+  while (buffer_read(b));
 }
 
 char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
@@ -82,7 +83,7 @@ char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
     line_len = *next_offset - start_offset;
 
     buffer_lines[i] = (char*)malloc((line_len + 1) * sizeof(*buffer_lines[i]));
-    memcpy(buffer_lines[i], b->stream->strbuf->str + start_offset, line_len);
+    memcpy(buffer_lines[i], b->stream_str + start_offset, line_len);
     buffer_lines[i][line_len] = '\0';
 
     start_offset = *next_offset;

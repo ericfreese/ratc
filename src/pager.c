@@ -21,9 +21,7 @@ void free_pager(Pager *p) {
 void render_pager(Pager *p) {
   char **buffer_lines;
 
-  pthread_mutex_lock(&p->buffer->lock);
   buffer_lines = get_buffer_lines(p->buffer, 0, 10);
-  pthread_mutex_unlock(&p->buffer->lock);
 
   for (int y = 0; buffer_lines[y] != NULL; y++) {
     mvprintw(y, 0, "%s", buffer_lines[y]);
@@ -58,8 +56,9 @@ void run_pager_command(Pager *p) {
       execl(shell, shell, "-c", p->cmd, NULL);
       perror("execl");
       exit(EXIT_FAILURE);
-    default:
-      close(fds[1]);
-      p->buffer = new_buffer(pid, fds[0]);
   }
+
+  close(fds[1]);
+
+  p->buffer = new_buffer(pid, fds[0]);
 }

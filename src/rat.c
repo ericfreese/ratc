@@ -2,39 +2,98 @@
 
 void main_loop() {
   int done = 0;
-  int retval;
+  int n, i;
   KeyStack *key_stack = new_key_stack();
+  int ttyin = open("/dev/tty", O_RDONLY);
 
-  struct pollfd pfds[1];
-  pfds[0].fd = open("/dev/tty", O_RDONLY);
-  pfds[0].events = POLLIN;
+  PollRegistry *pr = new_poll_registry();
+  PollItems *pis;
+  struct pollfd *pfd;
 
+  //Pager *p = new_pager("i=1; while true; do sleep 1; echo foo $i; i=$((i + 1)); done");
   Pager *p = new_pager("git diff --no-color");
 
-  while (!done) {
-    retval = poll(pfds, 1, 100);
+  poll_registry_add(pr, PI_USER_INPUT, NULL, ttyin);
+  poll_registry_add(pr, PI_BUFFER_READ, p->buffer, p->buffer->fd);
 
-    if (retval == -1) {
-      // Handle interrupted syscall
+  while (!done) {
+    pis = poll_registry_poll_items(pr);
+    pfd = poll_registry_build_pfd(pis);
+
+  start_poll:
+    n = poll(pfd, pis->len, -1);
+
+    fprintf(stderr, "poll returned %d\n", n);
+
+    if (n == -1) {
       if (errno == EINTR) {
-        continue;
+        goto start_poll;
       }
 
       perror("poll");
       exit(EXIT_FAILURE);
-    } else if (retval && pfds[0].revents & POLLIN) {
+    }
+
+    /* The first poll fd is the terminal. If user input is present, handle it
+     * by itself and restart the loop to avoid conflicts with the other fd's */
+    if (pfd[0].revents & POLLIN) {
+      fprintf(stderr, "got tty input\n");
       int ch = getch();
       key_stack_push(key_stack, (char*)keyname(ch));
 
-      Strbuf *sb = new_strbuf("");
-      key_stack_to_strbuf(key_stack, sb);
-      fprintf(stderr, "keystack: '%s'\n", sb->str);
-      free_strbuf(sb);
+      if (ch == 'a') {
+        Annotator *a = new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> debug.log");
+        poll_registry_add(pr, PI_ANNOTATOR_WRITE, a, a->wfd);
+        // poll_registry_add(pr, PI_ANNOTATOR_READ, a, a->rfd);
+      }
+
+      char *kstr = stringify_key_stack(key_stack);
+      fprintf(stderr, "keystack: '%s'\n", kstr);
+      free(kstr);
 
       // TODO: Handle key event
+    } else {
+      for (i = 1; i < pis->len; i++) {
+        switch (pis->items[i]->type) {
+          case PI_BUFFER_READ:
+            if (pfd[i].revents & (POLLIN | POLLHUP)) {
+              if (pfd[i].revents & POLLIN) {
+                fprintf(stderr, "POLLIN ready for buffer %d\n", i);
+                buffer_read(pis->items[i]->ptr);
+              }
+
+              if (pfd[i].revents & POLLHUP) {
+                fprintf(stderr, "POLLHUP ready for buffer %d\n", i);
+                buffer_read_all(pis->items[i]->ptr);
+                poll_registry_remove(pr, pis->items[i]->ptr);
+              }
+            }
+            break;
+          case PI_ANNOTATOR_WRITE:
+            annotator_write(pis->items[i]->ptr);
+            break;
+
+          case PI_ANNOTATOR_READ:
+      //      // Read annotations (or partial annotations) from annotators who have data for us
+      //      if (pfds[3].revents & POLLIN) {
+      //        Annotation *ann = annotator_read(a);
+      //        fprintf(stderr, "Got annotation { start: %d, end: %d, type: %s, value: %s }\n", ann->start, ann->end, ann->type, ann->value);
+      //        free_annotation(ann);
+      //        // TODO: Add annotation to buffer
+      //      }
+            break;
+
+          case PI_USER_INPUT:
+            /* shouldn't get here */
+            break;
+        }
+      }
     }
 
     render_pager(p);
+
+    free_poll_items(pis);
+    free(pfd);
   }
 }
 

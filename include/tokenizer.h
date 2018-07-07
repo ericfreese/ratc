@@ -1,8 +1,9 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
-#include "strbuf.h"
 
 typedef enum {
   TK_NONE = 0,
@@ -13,19 +14,24 @@ typedef enum {
 
 typedef struct {
   TokenType type;
-  Strbuf *value;
+  char *value;
 } Token;
 
+void free_token(Token *t);
+
 typedef struct {
-  int fd;
-  char unread_byte;
-  int was_unread;
+  // TODO: The memstream hangs on to old data even after tokens have been read
+  // from it. Replace with some data structure that discards the data after
+  // it's been successfully tokenized
+  char *read_buffer_str;
+  size_t read_buffer_len;
+  FILE *read_buffer;
+  long last_offset;
 } Tokenizer;
 
-Tokenizer *new_tokenizer(int fd);
+Tokenizer *new_tokenizer();
 void free_tokenizer(Tokenizer *tr);
-ssize_t read_byte(Tokenizer *tr, char *byte);
-int unread_byte(Tokenizer *tr, char *byte);
-ssize_t read_token(Tokenizer *tr, Token *t);
+void tokenizer_buffer_input(Tokenizer *tr, char *str, size_t len);
+Token *read_token(Tokenizer *tr);
 
 #endif

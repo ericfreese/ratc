@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "buffer.h"
 
 typedef struct {

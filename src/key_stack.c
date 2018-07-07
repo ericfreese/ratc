@@ -21,9 +21,16 @@ void key_stack_push(KeyStack *ks, char *key) {
   }
 }
 
-void key_stack_to_strbuf(KeyStack *ks, Strbuf *out) {
-  for (KeyStackItem *cursor = ks->first; cursor != NULL; cursor = cursor->next) {
-    strbuf_write(out, (char*)cursor->key);
-  }
-}
+char *stringify_key_stack(KeyStack *ks) {
+  char *buf;
+  size_t len;
+  FILE *stream = open_memstream(&buf, &len);
 
+  for (KeyStackItem *cursor = ks->first; cursor != NULL; cursor = cursor->next) {
+    fputs(cursor->key, stream);
+  }
+
+  fclose(stream);
+
+  return buf;
+}

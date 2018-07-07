@@ -2,6 +2,7 @@
 #define KEY_STACK_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "strbuf.h"
 
 typedef struct KeyStackItem KeyStackItem;
@@ -17,6 +18,6 @@ typedef struct {
 
 KeyStack *new_key_stack();
 void key_stack_push(KeyStack *ks, char *key);
-void key_stack_to_strbuf(KeyStack *ks, Strbuf *out);
+char *stringify_key_stack(KeyStack *ks);
 
 #endif
