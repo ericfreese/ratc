@@ -4,20 +4,19 @@ void main_loop() {
   int done = 0;
   int n, i;
   KeyStack *key_stack = new_key_stack();
-  int ttyin = open("/dev/tty", O_RDONLY);
 
-  PollRegistry *pr = new_poll_registry();
   PollItems *pis;
   struct pollfd *pfd;
+
+  poll_registry_add(PI_USER_INPUT, NULL, open("/dev/tty", O_RDONLY));
 
   //Pager *p = new_pager("i=1; while true; do sleep 1; echo foo $i; i=$((i + 1)); done");
   Pager *p = new_pager("git diff --no-color");
 
-  poll_registry_add(pr, PI_USER_INPUT, NULL, ttyin);
-  poll_registry_add(pr, PI_BUFFER_READ, p->buffer, p->buffer->fd);
+  poll_registry_add(PI_BUFFER_READ, p->buffer, p->buffer->fd);
 
   while (!done) {
-    pis = poll_registry_poll_items(pr);
+    pis = poll_registry_poll_items();
     pfd = poll_registry_build_pfd(pis);
 
   start_poll:
@@ -43,8 +42,8 @@ void main_loop() {
 
       if (ch == 'a') {
         Annotator *a = new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> debug.log");
-        poll_registry_add(pr, PI_ANNOTATOR_WRITE, a, a->wfd);
-        // poll_registry_add(pr, PI_ANNOTATOR_READ, a, a->rfd);
+        poll_registry_add(PI_ANNOTATOR_WRITE, a, a->wfd);
+        // poll_registry_add(PI_ANNOTATOR_READ, a, a->rfd);
       }
 
       char *kstr = stringify_key_stack(key_stack);
@@ -65,7 +64,7 @@ void main_loop() {
               if (pfd[i].revents & POLLHUP) {
                 fprintf(stderr, "POLLHUP ready for buffer %d\n", i);
                 buffer_read_all(pis->items[i]->ptr);
-                poll_registry_remove(pr, pis->items[i]->ptr);
+                poll_registry_remove(pis->items[i]->ptr);
               }
             }
             break;
@@ -103,7 +102,11 @@ int main(int argc, char **argv) {
   cbreak();
   noecho();
 
+  poll_registry_init();
+
   main_loop();
+
+  poll_registry_cleanup();
 
   endwin();
 
