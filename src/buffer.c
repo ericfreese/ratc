@@ -1,4 +1,5 @@
 #include "buffer.h"
+#include "poll_registry.h"
 
 static const size_t BUFFER_READ_LEN = 32768;
 
@@ -10,6 +11,8 @@ Buffer *new_buffer(pid_t pid, int fd) {
   b->stream = open_memstream(&b->stream_str, &b->stream_len);
   b->tr = new_tokenizer(b->fd);
   b->line_ends = new_line_ends();
+
+  poll_registry_add(PI_BUFFER_READ, b, b->fd);
 
   return b;
 }
@@ -59,6 +62,7 @@ ssize_t buffer_read(Buffer *b) {
     }
   } else {
     waitpid(b->pid, NULL, 0);
+    poll_registry_remove(b->fd);
   }
 
   return n;

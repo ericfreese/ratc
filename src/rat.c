@@ -13,8 +13,6 @@ void main_loop() {
   //Pager *p = new_pager("i=1; while true; do sleep 1; echo foo $i; i=$((i + 1)); done");
   Pager *p = new_pager("git diff --no-color");
 
-  poll_registry_add(PI_BUFFER_READ, p->buffer, p->buffer->fd);
-
   while (!done) {
     pis = poll_registry_poll_items();
     pfd = poll_registry_build_pfd(pis);
@@ -64,7 +62,6 @@ void main_loop() {
               if (pfd[i].revents & POLLHUP) {
                 fprintf(stderr, "POLLHUP ready for buffer %d\n", i);
                 buffer_read_all(pis->items[i]->ptr);
-                poll_registry_remove(pis->items[i]->ptr);
               }
             }
             break;
