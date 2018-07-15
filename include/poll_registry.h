@@ -1,5 +1,5 @@
-#ifndef POLL_INFO_H
-#define POLL_INFO_H
+#ifndef POLL_REGISTRY_H
+#define POLL_REGISTRY_H
 
 #include <stdlib.h>
 #include <string.h>
