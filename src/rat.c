@@ -61,8 +61,11 @@ void main_loop() {
               buffer_read(pis->items[i]->ptr);
             }
             break;
+
           case PI_ANNOTATOR_WRITE:
-            annotator_write(pis->items[i]->ptr);
+            if (pfd[i].revents & POLLOUT) {
+              annotator_write(pis->items[i]->ptr);
+            }
             break;
 
           case PI_ANNOTATOR_READ:
