@@ -11,6 +11,7 @@ Buffer *new_buffer(pid_t pid, int fd) {
   b->stream = open_memstream(&b->stream_str, &b->stream_len);
   b->tr = new_tokenizer(b->fd);
   b->line_ends = new_line_ends();
+  b->is_running = 1;
 
   poll_registry_add(PI_BUFFER_READ, b, b->fd);
 
@@ -61,7 +62,9 @@ ssize_t buffer_read(Buffer *b) {
       free_token(t);
     }
   } else {
+    b->is_running = 0;
     waitpid(b->pid, NULL, 0);
+    close(b->fd);
     poll_registry_remove(b->fd);
   }
 

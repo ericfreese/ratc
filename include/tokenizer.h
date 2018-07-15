@@ -22,7 +22,7 @@ void free_token(Token *t);
 typedef struct {
   // TODO: The memstream hangs on to old data even after tokens have been read
   // from it. Replace with some data structure that discards the data after
-  // it's been successfully tokenized
+  // it's been successfully tokenized (See AnnotationParser)
   char *read_buffer_str;
   size_t read_buffer_len;
   FILE *read_buffer;

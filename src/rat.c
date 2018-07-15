@@ -11,7 +11,7 @@ void main_loop() {
   poll_registry_add(PI_USER_INPUT, NULL, open("/dev/tty", O_RDONLY));
 
   //Pager *p = new_pager("i=1; while true; do sleep 1; echo foo $i; i=$((i + 1)); done");
-  Pager *p = new_pager("git diff --no-color");
+  Pager *p = new_pager("for i ({1..15}); do git diff --no-color; done");
 
   while (!done) {
     pis = poll_registry_poll_items();
@@ -39,9 +39,12 @@ void main_loop() {
       key_stack_push(key_stack, (char*)keyname(ch));
 
       if (ch == 'a') {
-        Annotator *a = new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> debug.log");
-        poll_registry_add(PI_ANNOTATOR_WRITE, a, a->wfd);
-        // poll_registry_add(PI_ANNOTATOR_READ, a, a->rfd);
+        // new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> /dev/null");
+        new_annotator(
+          p->buffer,
+          "while read LINE; do echo \"annotator: $LINE\" >> /dev/null; sleep 0.01; done",
+          "foo.bar"
+        );
       }
 
       char *kstr = stringify_key_stack(key_stack);
@@ -69,13 +72,13 @@ void main_loop() {
             break;
 
           case PI_ANNOTATOR_READ:
-      //      // Read annotations (or partial annotations) from annotators who have data for us
-      //      if (pfds[3].revents & POLLIN) {
-      //        Annotation *ann = annotator_read(a);
-      //        fprintf(stderr, "Got annotation { start: %d, end: %d, type: %s, value: %s }\n", ann->start, ann->end, ann->type, ann->value);
-      //        free_annotation(ann);
-      //        // TODO: Add annotation to buffer
-      //      }
+            if (pfd[i].revents & POLLHUP) {
+              fprintf(stderr, "POLLHUP ready for annotator read %d\n", i);
+              annotator_read_all(pis->items[i]->ptr);
+            } else if (pfd[i].revents & POLLIN) {
+              fprintf(stderr, "POLLIN ready for annotator read %d\n", i);
+              annotator_read(pis->items[i]->ptr);
+            }
             break;
 
           case PI_USER_INPUT:

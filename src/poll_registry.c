@@ -124,10 +124,9 @@ PollItems *poll_registry_poll_items() {
     switch (pi->type) {
       case PI_USER_INPUT:
       case PI_BUFFER_READ:
+      case PI_ANNOTATOR_READ:
         pis->items[pis->len] = pi;
         pis->len++;
-        break;
-      case PI_ANNOTATOR_READ:
         break;
       case PI_ANNOTATOR_WRITE:
         fprintf(stderr, "building poll, annotator at: %ld/%ld\n", ((Annotator*)pi->ptr)->woffset, ((Annotator*)pi->ptr)->buffer->stream_len);
