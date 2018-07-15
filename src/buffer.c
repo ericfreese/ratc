@@ -22,7 +22,7 @@ void free_buffer(Buffer *b) {
   free(b);
 }
 
-int buffer_read(Buffer *b) {
+ssize_t buffer_read(Buffer *b) {
   char buf[BUFFER_READ_LEN];
   ssize_t n;
   Token *t;
