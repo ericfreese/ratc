@@ -24,6 +24,14 @@ void poll_registry_cleanup() {
   free(poll_registry);
 }
 
+void poll_registry_print(char *str) {
+  fprintf(stderr, "Poll registry (%s, %ld, first: %p, last: %p):\n", str, poll_registry->len, poll_registry->first, poll_registry->last);
+
+  for (PollItem *pi = poll_registry->first; pi != NULL; pi = pi->next) {
+    fprintf(stderr, "  - %p -- type: %d, fd: %d, ptr: %p, next: %p\n", pi, pi->type, pi->fd, pi->ptr, pi->next);
+  }
+}
+
 void poll_registry_add(PollItemType type, void *ptr, int fd) {
   PollItem *pi;
 
@@ -48,35 +56,53 @@ void poll_registry_add(PollItemType type, void *ptr, int fd) {
   }
 
   poll_registry->len++;
+  poll_registry_print("added");
 }
 
-void poll_registry_remove(void *ptr) {
+void poll_registry_remove(int fd) {
   PollItem *cursor = poll_registry->first;
+  PollItem *to_remove = NULL;
 
-  if (cursor->ptr == ptr) {
-    poll_registry->first = cursor->next;
-    poll_registry->len--;
-    free(cursor);
+  fprintf(stderr, "removing poll item %d\n", fd);
+
+  if (cursor == NULL) {
     return;
   }
 
-  while (cursor->next != NULL) {
-    if (cursor->next->ptr == ptr) {
-      if (cursor->next == poll_registry->last) {
-        poll_registry->last = cursor;
-        free(cursor->next);
-        cursor->next = NULL;
-      } else {
-        free(cursor->next);
-        cursor->next = cursor->next->next;
+  if (cursor->fd == fd) {
+    to_remove = cursor;
+  } else {
+    while (cursor->next != NULL) {
+      if (cursor->next->fd == fd) {
+        to_remove = cursor->next;
+        break;
       }
 
-      poll_registry->len--;
-      return;
+      cursor = cursor->next;
     }
-
-    cursor = cursor->next;
   }
+
+  if (to_remove == NULL) {
+    fprintf(stderr, "could not find poll item %d\n", fd);
+    return;
+  }
+
+  if (to_remove == poll_registry->first) {
+    if (cursor->next != NULL) {
+      poll_registry->first = cursor->next;
+    } else {
+      poll_registry->first = poll_registry->last = NULL;
+    }
+  } else if (to_remove == poll_registry->last) {
+    poll_registry->last = cursor;
+    cursor->next = NULL;
+  } else {
+    cursor->next = cursor->next->next;
+  }
+
+  free(to_remove);
+  poll_registry->len--;
+  poll_registry_print("removed");
 }
 
 PollItems *poll_registry_poll_items() {

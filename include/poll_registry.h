@@ -36,7 +36,7 @@ typedef struct {
 void poll_registry_init();
 void poll_registry_cleanup();
 void poll_registry_add(PollItemType prtype, void *ptr, int fd);
-void poll_registry_remove(void *ptr);
+void poll_registry_remove(int fd);
 PollItems *poll_registry_poll_items();
 void free_poll_items(PollItems *pis);
 struct pollfd *poll_registry_build_pfd(PollItems *pis);
