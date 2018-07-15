@@ -53,16 +53,12 @@ void main_loop() {
       for (i = 1; i < pis->len; i++) {
         switch (pis->items[i]->type) {
           case PI_BUFFER_READ:
-            if (pfd[i].revents & (POLLIN | POLLHUP)) {
-              if (pfd[i].revents & POLLIN) {
-                fprintf(stderr, "POLLIN ready for buffer %d\n", i);
-                buffer_read(pis->items[i]->ptr);
-              }
-
-              if (pfd[i].revents & POLLHUP) {
-                fprintf(stderr, "POLLHUP ready for buffer %d\n", i);
-                buffer_read_all(pis->items[i]->ptr);
-              }
+            if (pfd[i].revents & POLLHUP) {
+              fprintf(stderr, "POLLHUP ready for buffer %d\n", i);
+              buffer_read_all(pis->items[i]->ptr);
+            } else if (pfd[i].revents & POLLIN) {
+              fprintf(stderr, "POLLIN ready for buffer %d\n", i);
+              buffer_read(pis->items[i]->ptr);
             }
             break;
           case PI_ANNOTATOR_WRITE:
