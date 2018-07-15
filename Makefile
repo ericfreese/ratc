@@ -19,6 +19,7 @@ _OBJ = \
 	poll_registry.o \
 	rat.o \
 	strbuf.o \
+	str_util.o \
 	tokenizer.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
