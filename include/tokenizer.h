@@ -26,6 +26,8 @@ typedef struct {
   char *read_buffer_str;
   size_t read_buffer_len;
   FILE *read_buffer;
+
+  // To seek back to if we get to a place where we need more input for a complete token
   long last_offset;
 } Tokenizer;
 
