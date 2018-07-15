@@ -1,5 +1,7 @@
 #include "buffer.h"
 
+static const size_t BUFFER_READ_LEN = 32768;
+
 Buffer *new_buffer(pid_t pid, int fd) {
   Buffer *b = (Buffer*)malloc(sizeof(Buffer));
 
@@ -19,8 +21,6 @@ void free_buffer(Buffer *b) {
   free_tokenizer(b->tr);
   free(b);
 }
-
-static const size_t BUFFER_READ_LEN = 4096;
 
 int buffer_read(Buffer *b) {
   char buf[BUFFER_READ_LEN];
