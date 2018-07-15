@@ -1,4 +1,5 @@
 #include "poll_registry.h"
+#include "annotate.h"
 
 PollRegistry *poll_registry;
 

@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <poll.h>
-#include "annotate.h"
 
 typedef enum {
   PI_USER_INPUT = 0,
