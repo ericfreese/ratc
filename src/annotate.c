@@ -25,6 +25,8 @@ void free_annotation(Annotation *a) {
 AnnotationParser *new_annotation_parser(char *annotation_type) {
   AnnotationParser *ap = malloc(sizeof(*ap));
 
+  ap->version = 0;
+  ap->has_version = 0;
   ap->read_buffer = open_memstream(&ap->read_buffer_str, &ap->read_buffer_len);
   ap->annotation_type = annotation_type;
 
@@ -52,7 +54,7 @@ void annotation_parser_buffer_input(AnnotationParser *ap, char *str, size_t len)
 Annotation *read_annotation(AnnotationParser *ap) {
   ssize_t n;
   unsigned char version;
-  uint32_t num[3];
+  uint64_t num[3];
   char *val;
 
   fpos_t orig_pos;
@@ -62,13 +64,18 @@ Annotation *read_annotation(AnnotationParser *ap) {
     exit(EXIT_FAILURE);
   }
 
-  if ((n = fread(&version, sizeof(version), 1, ap->read_buffer)) < 1) {
-    goto not_enough_input;
-  };
+  if (!ap->has_version) {
+    if ((n = fread(&version, sizeof(version), 1, ap->read_buffer)) < 1) {
+      goto not_enough_input;
+    };
 
-  if (version != 1) {
-    fprintf(stderr, "invalid annotator version: %d\n", version);
-    exit(EXIT_FAILURE);
+    if (version != 1) {
+      fprintf(stderr, "invalid annotator version: %d\n", version);
+      exit(EXIT_FAILURE);
+    }
+
+    ap->version = version;
+    ap->has_version = 1;
   }
 
   if ((n = fread(num, sizeof(*num), 3, ap->read_buffer)) < 3) {

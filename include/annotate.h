@@ -19,6 +19,8 @@ void free_annotation(Annotation *a);
 
 typedef struct {
   char *annotation_type;
+  unsigned char version;
+  int has_version;
 
   // TODO: The memstream hangs on to old data even after tokens have been read
   // from it. Replace with some data structure that discards the data after
