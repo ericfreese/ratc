@@ -10,8 +10,9 @@ void main_loop() {
 
   poll_registry_add(PI_USER_INPUT, NULL, open("/dev/tty", O_RDONLY));
 
-  //Pager *p = new_pager("i=1; while true; do sleep 1; echo foo $i; i=$((i + 1)); done");
-  Pager *p = new_pager("for i ({1..15}); do git diff --no-color; done");
+  //Pager *p = new_pager("i=1; while true; do sleep 3; echo foo $i; i=$((i + 1)); done");
+  //Pager *p = new_pager("for i ({1..15}); do cat src/buffer.c; done");
+  Pager *p = new_pager("for i ({1..15}); do echo foo; sleep 1; done");
 
   while (!done) {
     pis = poll_registry_poll_items();
@@ -40,10 +41,16 @@ void main_loop() {
 
       if (ch == 'a') {
         // new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> /dev/null");
+        //new_annotator(
+        //  p->buffer,
+        //  "while read LINE; do echo \"annotator: $LINE\" >> /dev/null; sleep 0.01; done",
+        //  "foo.bar"
+        //);
+
         new_annotator(
           p->buffer,
-          "while read LINE; do echo \"annotator: $LINE\" >> /dev/null; sleep 0.01; done",
-          "foo.bar"
+          "./test-annotator foo | tee >(xxd >> debug.log)",
+          "regex"
         );
       }
 

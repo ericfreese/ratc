@@ -27,45 +27,30 @@ AnnotationParser *new_annotation_parser(char *annotation_type) {
 
   ap->version = 0;
   ap->has_version = 0;
-  ap->read_buffer = open_memstream(&ap->read_buffer_str, &ap->read_buffer_len);
+  ap->rq = new_read_queue();
   ap->annotation_type = annotation_type;
 
   return ap;
 }
 
 void free_annotation_parser(AnnotationParser *ap) {
-  fclose(ap->read_buffer);
-  free(ap->read_buffer_str);
+  free_read_queue(ap->rq);
   free(ap->annotation_type);
   free(ap);
 }
 
-void annotation_parser_buffer_input(AnnotationParser *ap, char *str, size_t len) {
-  ssize_t n = fwrite(str, sizeof(*str), len, ap->read_buffer);
-
-  if (n < len) {
-    perror("fwrite");
-    exit(EXIT_FAILURE);
-  }
-
-  fflush(ap->read_buffer);
+void annotation_parser_buffer_input(AnnotationParser *ap, char *buf, size_t len) {
+  read_queue_write(ap->rq, buf, len);
 }
 
 Annotation *read_annotation(AnnotationParser *ap) {
-  ssize_t n;
+  size_t n;
   unsigned char version;
   uint64_t num[3];
   char *val;
 
-  fpos_t orig_pos;
-
-  if (fgetpos(ap->read_buffer, &orig_pos) == -1) {
-    perror("fgetpos");
-    exit(EXIT_FAILURE);
-  }
-
   if (!ap->has_version) {
-    if ((n = fread(&version, sizeof(version), 1, ap->read_buffer)) < 1) {
+    if ((n = read_queue_read(ap->rq, &version, 1)) < 1) {
       goto not_enough_input;
     };
 
@@ -78,23 +63,26 @@ Annotation *read_annotation(AnnotationParser *ap) {
     ap->has_version = 1;
   }
 
-  if ((n = fread(num, sizeof(*num), 3, ap->read_buffer)) < 3) {
+  if ((n = read_queue_read(ap->rq, &num, 3 * sizeof(*num))) < 3 * sizeof(*num)) {
     goto not_enough_input;
   };
 
   val = malloc(num[2] * sizeof(*val) + 1);
 
-  if ((n = fread(val, sizeof(*val), num[2], ap->read_buffer)) < num[2]) {
+  if ((n = read_queue_read(ap->rq, val, num[2])) < num[2]) {
     free(val);
     goto not_enough_input;
   }
 
   val[n] = '\0';
 
+  read_queue_commit(ap->rq);
+
   return new_annotation(num[0], num[1], copy_string(ap->annotation_type), val);
 
 not_enough_input:
-  fsetpos(ap->read_buffer, &orig_pos);
+  fprintf(stderr, "NOT ENOUGH INPUT\n");
+  read_queue_rollback(ap->rq);
   return NULL;
 }
 
@@ -190,7 +178,7 @@ void annotator_write(Annotator *a) {
 }
 
 ssize_t annotator_read(Annotator *a) {
-  char buf[ANNOTATOR_READ_LEN];
+  char *buf = malloc(ANNOTATOR_READ_LEN);
   ssize_t n;
 
   Annotation *t;

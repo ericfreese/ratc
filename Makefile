@@ -18,6 +18,7 @@ _OBJ = \
 	pager.o \
 	poll_registry.o \
 	rat.o \
+	read_queue.o \
 	strbuf.o \
 	str_util.o \
 	tokenizer.o

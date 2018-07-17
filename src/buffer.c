@@ -27,7 +27,7 @@ void free_buffer(Buffer *b) {
 }
 
 ssize_t buffer_read(Buffer *b) {
-  char buf[BUFFER_READ_LEN];
+  char *buf = malloc(BUFFER_READ_LEN);
   ssize_t n;
   Token *t;
 

@@ -18,21 +18,15 @@ Annotation *new_annotation(uint32_t start, uint32_t end, char *type, char *value
 void free_annotation(Annotation *a);
 
 typedef struct {
+  ReadQueue *rq;
   char *annotation_type;
   unsigned char version;
   int has_version;
-
-  // TODO: The memstream hangs on to old data even after tokens have been read
-  // from it. Replace with some data structure that discards the data after
-  // it's been successfully parsed to annotations (See Tokenizer)
-  char *read_buffer_str;
-  size_t read_buffer_len;
-  FILE *read_buffer;
 } AnnotationParser;
 
 AnnotationParser *new_annotation_parser();
 void free_annotation_parser(AnnotationParser *ap);
-void annotation_parser_buffer_input(AnnotationParser *ap, char *str, size_t len);
+void annotation_parser_buffer_input(AnnotationParser *ap, char *buf, size_t len);
 Annotation *read_annotation(AnnotationParser *ap);
 
 typedef struct {
