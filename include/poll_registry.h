@@ -29,7 +29,6 @@ typedef struct {
 
 typedef struct {
   size_t len;
-  size_t size;
   PollItem **items;
 } PollItems;
 
