@@ -1,4 +1,8 @@
-#include "tokenizer.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include "buffer.h"
 
 Token *new_token(TokenType type, char *value) {
   Token *t = malloc(sizeof(*t));
@@ -28,7 +32,7 @@ void free_tokenizer(Tokenizer *tr) {
   free(tr);
 }
 
-void tokenizer_buffer_input(Tokenizer *tr, char *buf, size_t len) {
+void tokenizer_write(Tokenizer *tr, char *buf, size_t len) {
   read_queue_write(tr->rq, buf, len);
 }
 
@@ -36,7 +40,7 @@ int is_content_char(char ch) {
   return ch != '\x1b' && ch != '\n';
 }
 
-Token *read_content_token(Tokenizer *tr, int first) {
+Token *read_content_token(Tokenizer *tr, char first) {
   char ch;
   size_t n;
   char *val;
@@ -72,7 +76,7 @@ Token *read_content_token(Tokenizer *tr, int first) {
   return new_token(TK_CONTENT, val);
 }
 
-Token *read_token(Tokenizer *tr) {
+Token *tokenizer_read(Tokenizer *tr) {
   char ch;
   size_t n;
 

@@ -1,4 +1,4 @@
-#include "line_ends.h"
+#include "buffer.h"
 
 LineEnds *new_line_ends() {
   LineEnds *le = (LineEnds*)malloc(sizeof(*le));

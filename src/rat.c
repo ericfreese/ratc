@@ -1,3 +1,9 @@
+#include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <locale.h>
+#include <poll.h>
+
 #include "rat.h"
 
 void main_loop() {

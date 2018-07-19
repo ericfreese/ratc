@@ -9,9 +9,10 @@ Buffer *new_buffer(pid_t pid, int fd) {
   b->pid = pid;
   b->fd = fd;
   b->stream = open_memstream(&b->stream_str, &b->stream_len);
-  b->tr = new_tokenizer(b->fd);
+  b->tokenizer = new_tokenizer(b->fd);
   b->line_ends = new_line_ends();
   b->is_running = 1;
+  b->annotations = new_annotations();
 
   poll_registry_add(PI_BUFFER_READ, b, b->fd);
 
@@ -19,9 +20,10 @@ Buffer *new_buffer(pid_t pid, int fd) {
 }
 
 void free_buffer(Buffer *b) {
+  free_annotations(b->annotations);
   free(b->stream_str);
   free_line_ends(b->line_ends);
-  free_tokenizer(b->tr);
+  free_tokenizer(b->tokenizer);
   free(b);
 }
 
@@ -38,9 +40,9 @@ ssize_t buffer_read(Buffer *b) {
   fprintf(stderr, "read %ld bytes in buffer_read\n", n);
 
   if (n) {
-    tokenizer_buffer_input(b->tr, buf, n);
+    tokenizer_write(b->tokenizer, buf, n);
 
-    while ((t = read_token(b->tr)) != NULL) {
+    while ((t = tokenizer_read(b->tokenizer)) != NULL) {
       switch (t->type) {
       case TK_NEWLINE:
         fputs(t->value, b->stream);

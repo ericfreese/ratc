@@ -1,4 +1,4 @@
-#include "str_util.h"
+#include "util.h"
 
 char *copy_string(char *str) {
   size_t len = strlen(str);

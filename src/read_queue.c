@@ -1,5 +1,6 @@
-#include "read_queue.h"
 #include <stdio.h>
+
+#include "read_queue.h"
 
 ReadQueue *new_read_queue() {
   ReadQueue *rq = malloc(sizeof(*rq));
