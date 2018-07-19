@@ -141,6 +141,8 @@ PollItems *poll_registry_poll_items() {
   PollItems *pis = new_poll_items();
 
   for (PollItem *pi = poll_registry->first; pi != NULL; pi = pi->next) {
+    Annotator *a;
+
     switch (pi->type) {
       case PI_USER_INPUT:
       case PI_BUFFER_READ:
@@ -148,8 +150,11 @@ PollItems *poll_registry_poll_items() {
         poll_items_add(pis, pi);
         break;
       case PI_ANNOTATOR_WRITE:
-        fprintf(stderr, "building poll, annotator at: %ld/%ld\n", ((Annotator*)pi->ptr)->woffset, ((Annotator*)pi->ptr)->buffer->stream_len);
-        if (((Annotator*)pi->ptr)->woffset < ((Annotator*)pi->ptr)->buffer->stream_len) {
+        a = (Annotator*)pi->ptr;
+
+        fprintf(stderr, "building poll, annotator at: %ld/%ld %d\n", a->woffset, a->buffer->stream_len, a->buffer->is_running);
+
+        if (a->woffset < a->buffer->stream_len || !a->buffer->is_running) {
           poll_items_add(pis, pi);
         }
 
