@@ -124,19 +124,12 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
   close(content_fds[0]);
   close(annotation_fds[1]);
 
-  // Don't block on writes
+  /* Don't block on writes */
   if ((flags = fcntl(content_fds[1], F_GETFL, 0)) < 0) {
     perror("fcntl");
     exit(EXIT_FAILURE);
   }
   fcntl(content_fds[1], F_SETFL, flags | O_NONBLOCK);
-
-  //// Don't block on reads
-  //if ((flags = fcntl(annotation_fds[0], F_GETFL, 0)) < 0) {
-  //  perror("fcntl");
-  //  exit(EXIT_FAILURE);
-  //}
-  //fcntl(annotation_fds[0], F_SETFL, flags | O_NONBLOCK);
 
   a = malloc(sizeof(*a));
 
