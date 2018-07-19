@@ -33,7 +33,7 @@ void read_queue_write(ReadQueue *rq, void *buf, size_t len) {
     rq->first = rq->last = chunk;
   }
 
-  fprintf(stderr, "wrote %ld bytes to read queue\n", len);
+  //fprintf(stderr, "wrote %ld bytes to read queue\n", len);
 }
 
 size_t read_queue_read(ReadQueue *rq, void *buf, size_t len) {
@@ -72,7 +72,7 @@ size_t read_queue_read(ReadQueue *rq, void *buf, size_t len) {
     break;
   }
 
-  fprintf(stderr, "read %ld bytes from read queue\n", n);
+  //fprintf(stderr, "read %ld bytes from read queue\n", n);
 
   return n;
 }

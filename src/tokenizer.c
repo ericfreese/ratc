@@ -67,7 +67,7 @@ Token *read_content_token(Tokenizer *tr, int first) {
 
   fclose(stream);
 
-  fprintf(stderr, "got content token '%s'\n", val);
+  //fprintf(stderr, "got content token '%s'\n", val);
 
   return new_token(TK_CONTENT, val);
 }
