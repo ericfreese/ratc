@@ -40,10 +40,10 @@ typedef struct {
 } Annotator;
 
 Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type);
-void annotator_write(Annotator *a);
-ssize_t annotator_read(Annotator *a);
-void annotator_read_all(Annotator *a);
-void kill_annotator(Annotator *a);
-void free_annotator(Annotator *a);
+void annotator_write(Annotator *ar);
+ssize_t annotator_read(Annotator *ar);
+void annotator_read_all(Annotator *ar);
+void kill_annotator(Annotator *ar);
+void free_annotator(Annotator *ar);
 
 #endif

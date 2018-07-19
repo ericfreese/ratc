@@ -94,7 +94,7 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
   int annotation_fds[2];
   int flags;
 
-  Annotator *a;
+  Annotator *ar;
 
   pipe(content_fds);
   pipe(annotation_fds);
@@ -131,52 +131,52 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
   }
   fcntl(content_fds[1], F_SETFL, flags | O_NONBLOCK);
 
-  a = malloc(sizeof(*a));
+  ar = malloc(sizeof(*ar));
 
-  a->buffer = b;
-  a->parser = new_annotation_parser(copy_string(annotation_type));
-  a->pid = pid;
-  a->wfd = content_fds[1];
-  a->rfd = annotation_fds[0];
-  a->woffset = 0;
+  ar->buffer = b;
+  ar->parser = new_annotation_parser(copy_string(annotation_type));
+  ar->pid = pid;
+  ar->wfd = content_fds[1];
+  ar->rfd = annotation_fds[0];
+  ar->woffset = 0;
 
-  poll_registry_add(PI_ANNOTATOR_WRITE, a, a->wfd);
-  poll_registry_add(PI_ANNOTATOR_READ, a, a->rfd);
+  poll_registry_add(PI_ANNOTATOR_WRITE, ar, ar->wfd);
+  poll_registry_add(PI_ANNOTATOR_READ, ar, ar->rfd);
 
-  return a;
+  return ar;
 }
 
-void annotator_write(Annotator *a) {
-  int n = a->buffer->stream_len - a->woffset;
+void annotator_write(Annotator *ar) {
+  int n = ar->buffer->stream_len - ar->woffset;
   int written;
 
   if (n > 0) {
-    written = write(a->wfd, a->buffer->stream_str + a->woffset, n);
+    written = write(ar->wfd, ar->buffer->stream_str + ar->woffset, n);
 
     if (written >= 0) {
-      fprintf(stderr, "wrote %d bytes to annotator %d\n", written, a->wfd);
-      a->woffset += written;
+      fprintf(stderr, "wrote %d bytes to annotator %d\n", written, ar->wfd);
+      ar->woffset += written;
     } else if (errno == EAGAIN) {
-      fprintf(stderr, "could not write %d bytes to annotator %d\n", n, a->wfd);
+      fprintf(stderr, "could not write %d bytes to annotator %d\n", n, ar->wfd);
     } else {
       perror("write");
       exit(EXIT_FAILURE);
     }
   }
 
-  if (a->woffset == a->buffer->stream_len && !a->buffer->is_running) {
-    close(a->wfd);
-    poll_registry_remove(a->wfd);
+  if (ar->woffset == ar->buffer->stream_len && !ar->buffer->is_running) {
+    close(ar->wfd);
+    poll_registry_remove(ar->wfd);
   }
 }
 
-ssize_t annotator_read(Annotator *a) {
+ssize_t annotator_read(Annotator *ar) {
   char *buf = malloc(ANNOTATOR_READ_LEN);
   ssize_t n;
 
-  Annotation *t;
+  Annotation *a;
 
-  if ((n = read(a->rfd, buf, ANNOTATOR_READ_LEN)) == -1) {
+  if ((n = read(ar->rfd, buf, ANNOTATOR_READ_LEN)) == -1) {
     perror("read");
     exit(EXIT_FAILURE);
   }
@@ -184,37 +184,37 @@ ssize_t annotator_read(Annotator *a) {
   fprintf(stderr, "read %ld bytes in annotator_read\n", n);
 
   if (n) {
-    annotation_parser_buffer_input(a->parser, buf, n);
+    annotation_parser_buffer_input(ar->parser, buf, n);
 
-    while ((t = read_annotation(a->parser)) != NULL) {
       // TODO: Add the annotation to the buffer!
       fprintf(stderr, "got annotation: %s: @ %d - %d / %s\n", t->type, t->start, t->end, t->value);
 
       free_annotation(t);
+    while ((a = read_annotation(ar->parser)) != NULL) {
     }
   } else {
-    waitpid(a->pid, NULL, 0);
-    close(a->rfd);
-    poll_registry_remove(a->rfd);
-    free_annotator(a);
+    waitpid(ar->pid, NULL, 0);
+    close(ar->rfd);
+    poll_registry_remove(ar->rfd);
+    free_annotator(ar);
   }
 
   return n;
 }
 
-void annotator_read_all(Annotator *a) {
-  while (annotator_read(a));
+void annotator_read_all(Annotator *ar) {
+  while (annotator_read(ar));
 }
 
-void kill_annotator(Annotator *a) {
-  if (kill(a->pid, SIGTERM) < 0) {
+void kill_annotator(Annotator *ar) {
+  if (kill(ar->pid, SIGTERM) < 0) {
     perror("kill");
     exit(EXIT_FAILURE);
   }
 
-  waitpid(a->pid, NULL, 0);
+  waitpid(ar->pid, NULL, 0);
 }
 
-void free_annotator(Annotator *a) {
-  free(a);
+void free_annotator(Annotator *ar) {
+  free(ar);
 }
