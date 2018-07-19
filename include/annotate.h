@@ -18,7 +18,7 @@ Annotation *new_annotation(uint32_t start, uint32_t end, char *type, char *value
 void free_annotation(Annotation *a);
 
 typedef struct {
-  ReadQueue *rq;
+  ReadQueue *read_queue;
   char *annotation_type;
   unsigned char version;
   int has_version;
