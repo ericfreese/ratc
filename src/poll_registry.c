@@ -3,6 +3,38 @@
 
 PollRegistry *poll_registry;
 
+PollItems *new_poll_items() {
+  PollItems *pis;
+
+  if ((pis = malloc(sizeof(*pis))) == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  pis->len = 0;
+
+  if ((pis->items = malloc(poll_registry->len * sizeof(*pis))) == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  return pis;
+}
+
+void poll_items_add(PollItems *pis, PollItem *pi) {
+  if (pis->len >= poll_registry->len) {
+    return;
+  }
+
+  pis->items[pis->len] = pi;
+  pis->len++;
+}
+
+void free_poll_items(PollItems *pis) {
+  free(pis->items);
+  free(pis);
+}
+
 void poll_registry_init() {
   if ((poll_registry = malloc(sizeof(*poll_registry))) == NULL) {
     perror("malloc");
@@ -106,33 +138,19 @@ void poll_registry_remove(int fd) {
 }
 
 PollItems *poll_registry_poll_items() {
-  PollItems *pis;
-
-  if ((pis = malloc(sizeof(*pis))) == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-
-  pis->len = 0;
-
-  if ((pis->items = malloc(poll_registry->len * sizeof(*pis))) == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  PollItems *pis = new_poll_items();
 
   for (PollItem *pi = poll_registry->first; pi != NULL; pi = pi->next) {
     switch (pi->type) {
       case PI_USER_INPUT:
       case PI_BUFFER_READ:
       case PI_ANNOTATOR_READ:
-        pis->items[pis->len] = pi;
-        pis->len++;
+        poll_items_add(pis, pi);
         break;
       case PI_ANNOTATOR_WRITE:
         fprintf(stderr, "building poll, annotator at: %ld/%ld\n", ((Annotator*)pi->ptr)->woffset, ((Annotator*)pi->ptr)->buffer->stream_len);
         if (((Annotator*)pi->ptr)->woffset < ((Annotator*)pi->ptr)->buffer->stream_len) {
-          pis->items[pis->len] = pi;
-          pis->len++;
+          poll_items_add(pis, pi);
         }
 
         break;
@@ -166,9 +184,4 @@ struct pollfd *poll_registry_build_pfd(PollItems *pis) {
   }
 
   return pfd;
-}
-
-void free_poll_items(PollItems *pis) {
-  free(pis->items);
-  free(pis);
 }
