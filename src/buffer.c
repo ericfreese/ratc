@@ -102,3 +102,14 @@ char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
 
   return buffer_lines;
 }
+
+void buffer_list_annotations(Buffer *b) {
+  Annotation *a;
+  fprintf(stderr, "Annotations for buffer:\n");
+
+  for (size_t i = 0; i < b->annotations->len; i++) {
+    a = b->annotations->items[i];
+
+    fprintf(stderr, "- [%s] %u %u %s\n", a->type, a->start, a->end, a->value);
+  }
+}

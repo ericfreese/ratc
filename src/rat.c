@@ -45,19 +45,23 @@ void main_loop() {
       int ch = getch();
       key_stack_push(key_stack, (char*)keyname(ch));
 
-      if (ch == 'a') {
-        // new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> /dev/null");
-        //new_annotator(
-        //  p->buffer,
-        //  "while read LINE; do echo \"annotator: $LINE\" >> /dev/null; sleep 0.01; done",
-        //  "foo.bar"
-        //);
+      switch (ch) {
+        case 'a':
+          // new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> /dev/null");
+          //new_annotator(
+          //  p->buffer,
+          //  "while read LINE; do echo \"annotator: $LINE\" >> /dev/null; sleep 0.01; done",
+          //  "foo.bar"
+          //);
 
-        new_annotator(
-          p->buffer,
-          "./test-annotator foo | tee >(xxd >> debug.log)",
-          "regex"
-        );
+          new_annotator(
+            p->buffer,
+            "./test-annotator foo | tee >(xxd >> debug.log)",
+            "regex"
+          );
+          break;
+        case 'l':
+          buffer_list_annotations(p->buffer);
       }
 
       char *kstr = stringify_key_stack(key_stack);

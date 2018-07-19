@@ -97,6 +97,7 @@ void free_buffer(Buffer *b);
 ssize_t buffer_read(Buffer *b);
 void buffer_read_all(Buffer *b);
 char **get_buffer_lines(Buffer *b, size_t start, size_t num);
+void buffer_list_annotations(Buffer *b);
 
 typedef struct {
   Buffer *buffer;
