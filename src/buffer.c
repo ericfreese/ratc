@@ -19,7 +19,6 @@ Buffer *new_buffer(pid_t pid, int fd) {
 }
 
 void free_buffer(Buffer *b) {
-  fclose(b->stream);
   free(b->stream_str);
   free_line_ends(b->line_ends);
   free_tokenizer(b->tr);
@@ -65,6 +64,7 @@ ssize_t buffer_read(Buffer *b) {
     b->is_running = 0;
     waitpid(b->pid, NULL, 0);
     close(b->fd);
+    fclose(b->stream);
     poll_registry_remove(b->fd);
   }
 
