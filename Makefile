@@ -15,6 +15,7 @@ _OBJ = \
 	annotation_parser.o \
 	annotations.o \
 	annotator.o \
+	box.o \
 	buffer.o \
 	key_stack.o \
 	line_ends.o \
@@ -24,7 +25,8 @@ _OBJ = \
 	read_queue.o \
 	strbuf.o \
 	util.o \
-	tokenizer.o
+	tokenizer.o \
+	widget.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 

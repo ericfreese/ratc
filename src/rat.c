@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <locale.h>
 #include <poll.h>
+#include <ncurses.h>
 
 #include "rat.h"
 
@@ -19,6 +20,7 @@ void main_loop() {
   //Pager *p = new_pager("i=1; while true; do sleep 3; echo foo $i; i=$((i + 1)); done");
   //Pager *p = new_pager("for i ({1..15}); do cat src/buffer.c; done");
   Pager *p = new_pager("for i ({1..15}); do echo foo; sleep 1; done");
+  Widget *pw = new_pager_widget(p);
 
   while (!done) {
     pis = poll_registry_poll_items();
@@ -55,13 +57,14 @@ void main_loop() {
           //);
 
           new_annotator(
-            p->buffer,
+            get_buffer(p),
             "./test-annotator foo | tee >(xxd >> debug.log)",
             "regex"
           );
           break;
         case 'l':
-          buffer_list_annotations(p->buffer);
+          buffer_list_annotations(get_buffer(p));
+          break;
       }
 
       char *kstr = stringify_key_stack(key_stack);
@@ -105,7 +108,7 @@ void main_loop() {
       }
     }
 
-    render_pager(p);
+    render_widget(pw);
 
     free_poll_items(pis);
     free(pfd);
@@ -117,6 +120,7 @@ int main(int argc, char **argv) {
   initscr();
   cbreak();
   noecho();
+  start_color();
 
   poll_registry_init();
 
