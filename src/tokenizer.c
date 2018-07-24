@@ -40,14 +40,12 @@ int is_content_char(char ch) {
   return ch != '\x1b' && ch != '\n';
 }
 
-Token *read_content_token(Tokenizer *tr, char first) {
+Token *read_content_token(Tokenizer *tr) {
   char ch;
   size_t n;
   char *val;
   size_t len;
   FILE *stream = open_memstream(&val, &len);
-
-  fputc(first, stream);
 
   while (1) {
     n = read_queue_read(tr->rq, &ch, 1);
@@ -76,6 +74,11 @@ Token *read_content_token(Tokenizer *tr, char first) {
   return new_token(TK_CONTENT, val);
 }
 
+Token *read_termstyle_token(Tokenizer *tr) {
+  // TODO: Handle escape sequences
+  return new_token(TK_TERMSTYLE, "\x1b");
+}
+
 Token *tokenizer_read(Tokenizer *tr) {
   char ch;
   size_t n;
@@ -84,16 +87,17 @@ Token *tokenizer_read(Tokenizer *tr) {
     return NULL;
   }
 
-  read_queue_commit(tr->rq);
-
   if (ch == '\n') {
+    read_queue_commit(tr->rq);
     return new_token(TK_NEWLINE, "\n");
   } else if (ch == '\x1b') {
-    // TODO: Handle escape sequences
-    return new_token(TK_TERMSTYLE, "\x1b");
+    read_queue_rollback(tr->rq);
+    return read_termstyle_token(tr);
   } else if (is_content_char(ch)) {
-    return read_content_token(tr, ch);
+    read_queue_rollback(tr->rq);
+    return read_content_token(tr);
   } else {
+    read_queue_commit(tr->rq);
     return new_token(TK_NONE, "");
   }
 }
