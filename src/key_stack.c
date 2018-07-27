@@ -3,6 +3,9 @@
 KeyStack *new_key_stack() {
   KeyStack *ks = (KeyStack*)malloc(sizeof(*ks));
 
+  ks->first = NULL;
+  ks->last = NULL;
+
   return ks;
 }
 
