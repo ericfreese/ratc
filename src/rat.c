@@ -6,6 +6,7 @@
 #include <ncurses.h>
 
 #include "rat.h"
+#include "duktape.h"
 
 void main_loop() {
   int done = 0;
@@ -19,8 +20,8 @@ void main_loop() {
 
   //Pager *p = new_pager("i=1; while true; do sleep 3; echo foo $i; i=$((i + 1)); done");
   //Pager *p = new_pager("for i ({1..15}); do cat src/buffer.c; done");
-  Pager *p = new_pager("for i ({1..15}); do echo foo; sleep 1; done");
-  Widget *pw = new_pager_widget(p);
+  //Pager *p = new_pager("for i ({1..15}); do echo foo; sleep 1; done");
+  //Widget *pw = new_pager_widget(p);
 
   while (!done) {
     pis = poll_registry_poll_items();
@@ -56,14 +57,14 @@ void main_loop() {
           //  "foo.bar"
           //);
 
-          new_annotator(
-            get_buffer(p),
-            "./test-annotator foo | tee >(xxd >> debug.log)",
-            "regex"
-          );
+          //new_annotator(
+          //  get_buffer(p),
+          //  "./test-annotator foo | tee >(xxd >> debug.log)",
+          //  "regex"
+          //);
           break;
         case 'l':
-          buffer_list_annotations(get_buffer(p));
+          //buffer_list_annotations(get_buffer(p));
           break;
       }
 
@@ -108,7 +109,7 @@ void main_loop() {
       }
     }
 
-    render_widget(pw);
+    //render_widget(pw);
 
     free_poll_items(pis);
     free(pfd);
@@ -122,11 +123,22 @@ int main(int argc, char **argv) {
   noecho();
   start_color();
 
+  duk_context *duk_ctx = duk_create_heap_default();
+
+  js_rat_setup(duk_ctx);
+
   poll_registry_init();
 
-  main_loop();
+  duk_eval_string_noresult(duk_ctx, "  \
+    var p = new Rat.Pager('git diff'); \
+    Rat.printPager(p);                 \
+  ");
+
+  main_loop(duk_ctx);
 
   poll_registry_cleanup();
+
+  duk_destroy_heap(duk_ctx);
 
   endwin();
 

@@ -1,6 +1,6 @@
 IDIR =include
 CC=gcc
-CFLAGS=-g -I$(IDIR) -pthread -Wall
+CFLAGS=-g -I$(IDIR) -pthread -Wall -lm
 
 SDIR=src
 ODIR=$(SDIR)/obj
@@ -17,6 +17,8 @@ _OBJ = \
 	annotator.o \
 	box.o \
 	buffer.o \
+	duktape.o \
+	js_api.o \
 	key_stack.o \
 	line_ends.o \
 	pager.o \

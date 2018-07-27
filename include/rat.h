@@ -5,5 +5,6 @@
 #include "key_stack.h"
 #include "pager.h"
 #include "poll_registry.h"
+#include "js_api.h"
 
 #endif
