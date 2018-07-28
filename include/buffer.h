@@ -94,6 +94,7 @@ typedef struct {
 
 Buffer *new_buffer(pid_t pid, int fd);
 void free_buffer(Buffer *b);
+void close_buffer(Buffer *b);
 ssize_t buffer_read(Buffer *b);
 void buffer_read_all(Buffer *b);
 char **get_buffer_lines(Buffer *b, size_t start, size_t num);

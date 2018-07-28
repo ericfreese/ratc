@@ -1,3 +1,5 @@
+#include <signal.h>
+
 #include "buffer.h"
 #include "poll_registry.h"
 
@@ -25,6 +27,21 @@ void free_buffer(Buffer *b) {
   free_line_ends(b->line_ends);
   free_tokenizer(b->tokenizer);
   free(b);
+}
+
+void cleanup_buffer(Buffer *b) {
+  b->is_running = 0;
+  waitpid(b->pid, NULL, 0);
+  close(b->fd);
+  fclose(b->stream);
+  poll_registry_remove(b->fd);
+}
+
+void close_buffer(Buffer *b) {
+  if (b->is_running) {
+    kill(-b->pid, SIGTERM);
+    cleanup_buffer(b);
+  }
 }
 
 ssize_t buffer_read(Buffer *b) {
@@ -63,11 +80,7 @@ ssize_t buffer_read(Buffer *b) {
       free_token(t);
     }
   } else {
-    b->is_running = 0;
-    waitpid(b->pid, NULL, 0);
-    close(b->fd);
-    fclose(b->stream);
-    poll_registry_remove(b->fd);
+    cleanup_buffer(b);
   }
 
   return n;

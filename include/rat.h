@@ -1,10 +1,13 @@
 #ifndef RAT_H
 #define RAT_H
 
-#include "buffer.h"
-#include "key_stack.h"
 #include "pager.h"
-#include "poll_registry.h"
-#include "js_api.h"
+
+void rat_init();
+void rat_cleanup();
+void rat_push_pager(Pager *p);
+void rat_pop_pager();
+void rat_render();
+size_t rat_num_pagers();
 
 #endif

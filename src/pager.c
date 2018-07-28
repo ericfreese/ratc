@@ -10,20 +10,15 @@ struct pager {
   int scroll;
   int cursor;
   Box *box;
+
+  struct refs refs;
 };
 
-Pager *new_pager(char *cmd) {
-  Pager *p = (Pager*)malloc(sizeof(*p));
+void free_pager(const struct refs *r) {
+  Pager *p = container_of(r, Pager, refs);
 
-  p->cmd = cmd;
-  p->box = new_box(3, 3, 100, 20);
+  fprintf(stderr, "FREEING PAGER %p\n", p);
 
-  run_pager_command(p);
-
-  return p;
-}
-
-void free_pager(Pager *p) {
   if (p->buffer) {
     free_buffer(p->buffer);
   }
@@ -31,6 +26,26 @@ void free_pager(Pager *p) {
   free_box(p->box);
 
   free(p);
+}
+
+Pager *new_pager(char *cmd) {
+  Pager *p = (Pager*)malloc(sizeof(*p));
+
+  p->cmd = cmd;
+  p->box = new_box(3, 3, 100, 20);
+  p->refs = (struct refs){free_pager, 1};
+
+  run_pager_command(p);
+
+  return p;
+}
+
+void pager_ref_inc(Pager *p) {
+  ref_inc(&p->refs);
+}
+
+void pager_ref_dec(Pager *p) {
+  ref_dec(&p->refs);
 }
 
 void run_pager_command(Pager *p) {
@@ -53,6 +68,8 @@ void run_pager_command(Pager *p) {
       close(fds[0]);
       close(fds[1]);
 
+      setpgrp();
+
       execl(shell, shell, "-c", p->cmd, NULL);
       perror("execl");
       exit(EXIT_FAILURE);
@@ -63,13 +80,15 @@ void run_pager_command(Pager *p) {
   p->buffer = new_buffer(pid, fds[0]);
 }
 
+void cancel_pager_command(Pager *p) {
+  close_buffer(p->buffer);
+}
+
 Buffer *get_buffer(Pager *p) {
   return p->buffer;
 }
 
-void render_pager(void *pptr) {
-  Pager *p = (Pager*)pptr;
-
+void render_pager(Pager *p) {
   char **buffer_lines;
 
   buffer_lines = get_buffer_lines(p->buffer, 0, box_height(p->box));
@@ -85,23 +104,19 @@ void render_pager(void *pptr) {
   attroff(COLOR_PAIR(2));
 
   free(buffer_lines);
-
-  refresh();
 }
 
-void set_pager_box(void *pptr, int left, int top, int width, int height) {
-  Pager *p = (Pager*)pptr;
-
+void set_pager_box(Pager *p, int left, int top, int width, int height) {
   box_set_left(p->box, left);
   box_set_top(p->box, top);
   box_set_width(p->box, width);
   box_set_height(p->box, height);
 }
 
-Box *get_pager_box(void *pptr) {
-  return ((Pager*)pptr)->box;
+Box *get_pager_box(Pager *p) {
+  return p->box;
 }
 
-Widget *new_pager_widget(Pager *p) {
-  return new_widget(p, render_pager, set_pager_box, get_pager_box);
-}
+//Widget *new_pager_widget(Pager *p) {
+//  return new_widget(p, render_pager, set_pager_box, get_pager_box);
+//}
