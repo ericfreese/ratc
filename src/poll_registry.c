@@ -43,6 +43,7 @@ void poll_registry_init() {
 
   poll_registry->first = NULL;
   poll_registry->last = NULL;
+  poll_registry->len = 0;
 }
 
 void poll_registry_cleanup() {
