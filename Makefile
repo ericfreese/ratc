@@ -26,8 +26,8 @@ _OBJ = \
 	rat.o \
 	read_queue.o \
 	strbuf.o \
-	util.o \
 	tokenizer.o \
+	util.o \
 	widget.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
