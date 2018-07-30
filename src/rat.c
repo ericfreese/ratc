@@ -92,7 +92,8 @@ void handle_input(int ch) {
 }
 
 void rat_run() {
-  int n, i;
+  int n;
+  size_t i;
 
   PollItems *pis;
   struct pollfd *pfd;
@@ -125,10 +126,10 @@ void rat_run() {
         switch (pis->items[i]->type) {
           case PI_BUFFER_READ:
             if (pfd[i].revents & POLLHUP) {
-              fprintf(stderr, "POLLHUP ready for buffer %d\n", i);
+              fprintf(stderr, "POLLHUP ready for buffer %ld\n", i);
               buffer_read_all(pis->items[i]->ptr);
             } else if (pfd[i].revents & POLLIN) {
-              fprintf(stderr, "POLLIN ready for buffer %d\n", i);
+              fprintf(stderr, "POLLIN ready for buffer %ld\n", i);
               buffer_read(pis->items[i]->ptr);
             }
             break;
@@ -141,10 +142,10 @@ void rat_run() {
 
           case PI_ANNOTATOR_READ:
             if (pfd[i].revents & POLLHUP) {
-              fprintf(stderr, "POLLHUP ready for annotator read %d\n", i);
+              fprintf(stderr, "POLLHUP ready for annotator read %ld\n", i);
               annotator_read_all(pis->items[i]->ptr);
             } else if (pfd[i].revents & POLLIN) {
-              fprintf(stderr, "POLLIN ready for annotator read %d\n", i);
+              fprintf(stderr, "POLLIN ready for annotator read %ld\n", i);
               annotator_read(pis->items[i]->ptr);
             }
             break;
