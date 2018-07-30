@@ -1,6 +1,87 @@
+#include <stdio.h>
+
 #include "js_api.h"
+#include "key_seq.h"
 #include "pager.h"
 #include "rat.h"
+#include "util.h"
+
+struct js_event_handler {
+  char *stash_key;
+  duk_context *ctx;
+};
+
+JSEventHandler *new_js_event_handler(duk_context *duk_ctx, char *stash_key) {
+  JSEventHandler *jeh = malloc(sizeof *jeh);
+
+  jeh->stash_key = stash_key;
+  jeh->ctx = duk_ctx;
+
+  return jeh;
+}
+
+void js_run_event_handler(JSEventHandler *jeh) {
+  fprintf(stderr, "Running handler: '%s'\n", jeh->stash_key);
+  duk_push_heap_stash(jeh->ctx);
+  duk_get_prop_string(jeh->ctx, -1, jeh->stash_key);
+  duk_call(jeh->ctx, 0);
+  duk_pop(jeh->ctx);
+
+  /* Pop the return value too */
+  duk_pop(jeh->ctx);
+}
+
+void js_free_event_handler(JSEventHandler *jeh) {
+  duk_push_heap_stash(jeh->ctx);
+  duk_del_prop_string(jeh->ctx, -1, jeh->stash_key);
+  duk_pop(jeh->ctx);
+
+  free(jeh->stash_key);
+  free(jeh);
+}
+
+duk_ret_t js_add_event_listener(duk_context *duk_ctx) {
+  if (!duk_is_array(duk_ctx, 0)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an array");
+  }
+
+  if (!duk_is_function(duk_ctx, 1)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "second arg must be a function");
+  }
+
+  duk_size_t len = duk_get_length(duk_ctx, 0);
+
+  if (len <= 0) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "array must not be empty");
+  }
+
+  KeySeq *ks = new_key_seq();
+
+  for (duk_size_t i = 0; i < len; i++) {
+    duk_get_prop_index(duk_ctx, 0, i);
+
+    if (!duk_is_string(duk_ctx, -1)) {
+      free_key_seq(ks);
+      return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "array must contain only strings");
+    }
+
+    key_seq_add(ks, (char*)duk_get_string(duk_ctx, -1));
+
+    duk_pop(duk_ctx);
+  }
+
+  JSEventHandler *jeh = new_js_event_handler(duk_ctx, key_seq_str(ks));
+
+  /* Save a reference to the handler function in the stash */
+  duk_push_heap_stash(duk_ctx);
+  duk_dup(duk_ctx, 1);
+  duk_put_prop_string(duk_ctx, -2, jeh->stash_key);
+  duk_pop(duk_ctx);
+
+  rat_add_event_listener(ks, jeh);
+
+  return 0;
+}
 
 duk_ret_t rat_print(duk_context *duk_ctx) {
   const char *message = duk_get_string(duk_ctx, 0);
@@ -77,8 +158,17 @@ duk_ret_t js_rat_push(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_rat_pop(duk_context *duk_ctx) {
+  rat_pop_pager();
+
+  return 0;
+}
+
 void js_rat_setup(duk_context *duk_ctx) {
   duk_push_object(duk_ctx);
+
+  duk_push_c_function(duk_ctx, js_add_event_listener, 2);
+  duk_put_prop_string(duk_ctx, -2, "addEventListener");
 
   duk_push_c_function(duk_ctx, rat_print, 1);
   duk_put_prop_string(duk_ctx, -2, "print");
@@ -87,6 +177,9 @@ void js_rat_setup(duk_context *duk_ctx) {
   duk_put_prop_string(duk_ctx, -2, "printPager");
 
   js_pager_setup(duk_ctx);
+
+  duk_push_c_function(duk_ctx, js_rat_pop, 0);
+  duk_put_prop_string(duk_ctx, -2, "pop");
 
   duk_push_c_function(duk_ctx, js_rat_push, 1);
   duk_put_prop_string(duk_ctx, -2, "push");

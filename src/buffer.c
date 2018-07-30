@@ -10,6 +10,7 @@ Buffer *new_buffer(pid_t pid, int fd) {
 
   b->pid = pid;
   b->fd = fd;
+  b->stream_len = 0;
   b->stream = open_memstream(&b->stream_str, &b->stream_len);
   b->tokenizer = new_tokenizer(b->fd);
   b->line_ends = new_line_ends();

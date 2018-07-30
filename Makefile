@@ -18,7 +18,9 @@ _OBJ = \
 	box.o \
 	buffer.o \
 	duktape.o \
+	event_handlers.o \
 	js_api.o \
+	key_seq.o \
 	key_stack.o \
 	line_ends.o \
 	main.o \

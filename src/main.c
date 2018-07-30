@@ -56,12 +56,12 @@ void main_loop(duk_context *duk_ctx) {
           done = 1;
           break;
         case 'q':
-          rat_pop_pager();
-          break;
+          //rat_pop_pager();
+          //break;
         case 'p':
-          duk_eval_string_noresult(duk_ctx, "  \
-            Rat.push(new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done')); \
-          ");
+          //duk_eval_string_noresult(duk_ctx,
+          //  "Rat.push(new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done'));"
+          //);
           break;
         case 'a':
           // new_annotator(p->buffer, "stdbuf -oL -eL sed -e 's/^/annotator: /' >> /dev/null");
@@ -87,6 +87,8 @@ void main_loop(duk_context *duk_ctx) {
       free(kstr);
 
       // TODO: Handle key event
+
+      rat_handle_input(ch);
     } else {
       for (i = 1; i < pis->len; i++) {
         switch (pis->items[i]->type) {
@@ -132,6 +134,11 @@ void main_loop(duk_context *duk_ctx) {
   }
 }
 
+static void duk_fatal_handler(void *udata, const char *msg) {
+  fprintf(stderr, "FATAL: %s\n", msg);
+  abort();
+}
+
 int main(int argc, char **argv) {
   setlocale(LC_ALL, "");
   initscr();
@@ -141,19 +148,22 @@ int main(int argc, char **argv) {
 
   rat_init();
 
-  duk_context *duk_ctx = duk_create_heap_default();
+  duk_context *duk_ctx = duk_create_heap(NULL, NULL, NULL, NULL, duk_fatal_handler);
   js_rat_setup(duk_ctx);
 
   poll_registry_init();
   poll_registry_add(PI_USER_INPUT, NULL, open("/dev/tty", O_RDONLY));
 
-  /*duk_eval_string_noresult(duk_ctx, "  \
-  //  (function() { \
-  //    var p = new Rat.Pager('echo foo'); \
-  //    Rat.push(p); \
-  //  })() \
-  //");
-  */
+  duk_eval_string_noresult(duk_ctx,
+    "Rat.addEventListener(['p'], function() {"
+      "Rat.print('IT WORKED');"
+      "Rat.push(new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done'));"
+    "});"
+
+    "Rat.addEventListener(['q'], function() {"
+      "Rat.pop();"
+    "});"
+  );
 
   main_loop(duk_ctx);
 

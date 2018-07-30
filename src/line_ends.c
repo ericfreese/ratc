@@ -11,6 +11,7 @@ LineEnds *new_line_ends() {
 }
 
 void free_line_ends(LineEnds *le) {
+  free(le->offsets);
   free(le);
 }
 
