@@ -71,7 +71,9 @@ void rat_add_event_listener(KeySeq *trigger, JSEventHandler *jeh) {
 }
 
 void render() {
+  erase();
   render_pager_stack(pagers);
+  refresh();
 }
 
 void handle_input(int ch) {
@@ -99,6 +101,8 @@ void rat_run() {
   struct pollfd *pfd;
 
   while (!done) {
+    render();
+
     pis = poll_registry_poll_items();
     pfd = poll_registry_build_pfd(pis);
 
@@ -156,10 +160,6 @@ void rat_run() {
         }
       }
     }
-
-    erase();
-    render();
-    refresh();
 
     free_poll_items(pis);
     free(pfd);
