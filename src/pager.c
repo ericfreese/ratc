@@ -3,6 +3,7 @@
 #include <fcntl.h>
 
 #include "pager.h"
+#include "refs.h"
 
 struct pager {
   char *cmd;

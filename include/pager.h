@@ -3,7 +3,6 @@
 
 #include "buffer.h"
 #include "widget.h"
-#include "refs.h"
 
 typedef struct pager Pager;
 Pager *new_pager(char* cmd);
