@@ -4,6 +4,11 @@
 
 #include "buffer.h"
 
+struct token {
+  TokenType type;
+  char *value;
+};
+
 Token *new_token(TokenType type, char *value) {
   Token *t = malloc(sizeof(*t));
 
@@ -20,6 +25,18 @@ void free_token(Token *t) {
 
   free(t);
 }
+
+TokenType token_type(Token *t) {
+  return t->type;
+}
+
+const char* token_value(Token *t) {
+  return t->value;
+}
+
+struct tokenizer {
+  ReadQueue *rq;
+};
 
 Tokenizer *new_tokenizer() {
   Tokenizer *tr = (Tokenizer*)malloc(sizeof(*tr));

@@ -5,6 +5,53 @@
 
 static const size_t BUFFER_READ_LEN = 32768;
 
+typedef struct line_ends LineEnds;
+struct line_ends {
+  size_t *offsets;
+  size_t len;
+  size_t size;
+};
+
+LineEnds *new_line_ends() {
+  LineEnds *le = (LineEnds*)malloc(sizeof(*le));
+
+  le->len = 0;
+  le->size = 8;
+  le->offsets = (size_t*)malloc(le->size * sizeof(*le->offsets));
+
+  return le;
+}
+
+void free_line_ends(LineEnds *le) {
+  free(le->offsets);
+  free(le);
+}
+
+void push_line_end(LineEnds *le, size_t offset) {
+  if (le->len == le->size) {
+    le->size *= 2;
+    le->offsets = (size_t*)realloc(le->offsets, le->size * sizeof(*le->offsets));
+  }
+
+  le->offsets[le->len] = offset;
+
+  le->len++;
+}
+
+struct buffer {
+  pid_t pid;
+  int fd;
+  int is_running;
+
+  char *stream_str;
+  size_t stream_len;
+  FILE *stream;
+
+  LineEnds *line_ends;
+  Tokenizer *tokenizer;
+  Annotations *annotations;
+};
+
 Buffer *new_buffer(pid_t pid, int fd) {
   Buffer *b = (Buffer*)malloc(sizeof(Buffer));
 
@@ -61,14 +108,14 @@ ssize_t buffer_read(Buffer *b) {
     tokenizer_write(b->tokenizer, buf, n);
 
     while ((t = tokenizer_read(b->tokenizer)) != NULL) {
-      switch (t->type) {
+      switch (token_type(t)) {
       case TK_NEWLINE:
-        fputs(t->value, b->stream);
+        fputs(token_value(t), b->stream);
         fflush(b->stream);
         push_line_end(b->line_ends, b->stream_len);
         break;
       case TK_CONTENT:
-        fputs(t->value, b->stream);
+        fputs(token_value(t), b->stream);
         fflush(b->stream);
         break;
       case TK_TERMSTYLE:
@@ -91,14 +138,14 @@ void buffer_read_all(Buffer *b) {
   while (buffer_read(b));
 }
 
-char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
+const char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
   if (start >= b->line_ends->len) {
     num = 0;
   } else if (start + num > b->line_ends->len) {
     num = b->line_ends->len - start;
   }
 
-  char **buffer_lines = (char**)malloc((num + 1) * sizeof(*buffer_lines));
+  char **buffer_lines = malloc((num + 1) * sizeof *buffer_lines);
   size_t start_offset = 0;
   size_t line_len;
 
@@ -106,7 +153,7 @@ char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
     line_len = *next_offset - start_offset;
 
     buffer_lines[i] = (char*)malloc((line_len + 1) * sizeof(*buffer_lines[i]));
-    memcpy(buffer_lines[i], b->stream_str + start_offset, line_len);
+    memcpy((char*)buffer_lines[i], b->stream_str + start_offset, line_len);
     buffer_lines[i][line_len] = '\0';
 
     start_offset = *next_offset;
@@ -114,16 +161,36 @@ char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
 
   buffer_lines[num] = NULL;
 
-  return buffer_lines;
+  return (const char**)buffer_lines;
 }
 
-void buffer_list_annotations(Buffer *b) {
-  Annotation *a;
-  fprintf(stderr, "Annotations for buffer:\n");
+//void buffer_list_annotations(Buffer *b) {
+//  Annotation *a;
+//  fprintf(stderr, "Annotations for buffer:\n");
+//
+//  for (size_t i = 0; i < annotations_len(b->annotations); i++) {
+//    a = b->annotations->items[i];
+//
+//    fprintf(stderr, "- [%s] %u %u %s\n", annotation_type(a), annotation_start(a), annotation_end(a), annotation_value(a));
+//  }
+//}
 
-  for (size_t i = 0; i < b->annotations->len; i++) {
-    a = b->annotations->items[i];
+size_t buffer_len(Buffer *b) {
+  return b->stream_len;
+}
 
-    fprintf(stderr, "- [%s] %u %u %s\n", a->type, a->start, a->end, a->value);
+const char* buffer_content(Buffer *b, size_t offset) {
+  if (offset > b->stream_len) {
+    return NULL;
   }
+
+  return b->stream_str + offset;
+}
+
+int buffer_is_running(Buffer *b) {
+  return b->is_running;
+}
+
+void buffer_add_annotation(Buffer *b, Annotation *a) {
+  annotations_add(b->annotations, a);
 }

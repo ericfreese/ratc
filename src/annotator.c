@@ -7,6 +7,16 @@
 
 static const size_t ANNOTATOR_READ_LEN = 4096;
 
+struct annotator {
+  Buffer *buffer;
+  AnnotationParser *parser;
+  size_t woffset;
+
+  pid_t pid;
+  int wfd;
+  int rfd;
+};
+
 Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
   char* shell;
   pid_t pid;
@@ -68,11 +78,11 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
 }
 
 void annotator_write(Annotator *ar) {
-  int n = ar->buffer->stream_len - ar->woffset;
+  int n = buffer_len(ar->buffer) - ar->woffset;
   int written;
 
   if (n > 0) {
-    written = write(ar->wfd, ar->buffer->stream_str + ar->woffset, n);
+    written = write(ar->wfd, buffer_content(ar->buffer, ar->woffset), n);
 
     if (written >= 0) {
       fprintf(stderr, "wrote %d bytes to annotator %d\n", written, ar->wfd);
@@ -85,7 +95,7 @@ void annotator_write(Annotator *ar) {
     }
   }
 
-  if (ar->woffset == ar->buffer->stream_len && !ar->buffer->is_running) {
+  if (ar->woffset == buffer_len(ar->buffer) && !buffer_is_running(ar->buffer)) {
     close(ar->wfd);
     poll_registry_remove(ar->wfd);
   }
@@ -108,8 +118,8 @@ ssize_t annotator_read(Annotator *ar) {
     annotation_parser_write(ar->parser, buf, n);
 
     while ((a = annotation_parser_read(ar->parser)) != NULL) {
-      annotations_add(ar->buffer->annotations, a);
-      a->refs--;
+      buffer_add_annotation(ar->buffer, a);
+      annotation_ref_dec(a);
     }
   } else {
     waitpid(ar->pid, NULL, 0);

@@ -90,7 +90,7 @@ Buffer *get_buffer(Pager *p) {
 }
 
 void render_pager(Pager *p) {
-  char **buffer_lines;
+  const char **buffer_lines;
 
   buffer_lines = get_buffer_lines(p->buffer, 0, box_height(p->box));
 
@@ -99,7 +99,7 @@ void render_pager(Pager *p) {
 
   for (int y = 0; buffer_lines[y] != NULL; y++) {
     mvprintw(y + box_top(p->box), box_left(p->box), "%s", buffer_lines[y]);
-    free(buffer_lines[y]);
+    free((char*)buffer_lines[y]);
   }
 
   attroff(COLOR_PAIR(2));

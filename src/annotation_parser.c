@@ -1,6 +1,13 @@
 #include "buffer.h"
 #include "util.h"
 
+struct annotation_parser {
+  ReadQueue *read_queue;
+  char *annotation_type;
+  unsigned char version;
+  int has_version;
+};
+
 AnnotationParser *new_annotation_parser(char *annotation_type) {
   AnnotationParser *ap = malloc(sizeof(*ap));
 

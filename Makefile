@@ -22,7 +22,6 @@ _OBJ = \
 	js_api.o \
 	key_seq.o \
 	key_stack.o \
-	line_ends.o \
 	main.o \
 	pager.o \
 	pager_stack.o \
