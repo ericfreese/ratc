@@ -21,7 +21,6 @@ _OBJ = \
 	event_handlers.o \
 	js_api.o \
 	key_seq.o \
-	key_stack.o \
 	main.o \
 	pager.o \
 	pager_stack.o \
