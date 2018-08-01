@@ -64,11 +64,17 @@ const char* buffer_content(Buffer *b, size_t offset);
 int buffer_is_running(Buffer *b);
 
 typedef struct annotator Annotator;
-Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type);
-void annotator_write(Annotator *ar);
-ssize_t annotator_read(Annotator *ar);
-void annotator_read_all(Annotator *ar);
-void kill_annotator(Annotator *ar);
-void free_annotator(Annotator *ar);
+Annotator *new_annotator(char *cmd, char *annotation_type);
+void annotator_ref_inc(Annotator *ar);
+void annotator_ref_dec(Annotator *ar);
+
+typedef struct annotator_process AnnotatorProcess;
+AnnotatorProcess *new_annotator_process(Annotator *ar, Buffer *b);
+void annotator_process_write(AnnotatorProcess *ap);
+int annotator_process_should_poll_read(AnnotatorProcess *ap);
+ssize_t annotator_process_read(AnnotatorProcess *ap);
+void annotator_process_read_all(AnnotatorProcess *ap);
+void kill_annotator_process(AnnotatorProcess *ap);
+void free_annotator_process(AnnotatorProcess *ap);
 
 #endif

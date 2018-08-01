@@ -1,13 +1,50 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "buffer.h"
 #include "poll_registry.h"
 #include "util.h"
+#include "refs.h"
 
 static const size_t ANNOTATOR_READ_LEN = 4096;
 
 struct annotator {
+  const char* cmd;
+  const char* annotation_type;
+  struct refs refs;
+};
+
+void free_annotator(const struct refs *r) {
+  Annotator *ar = container_of(r, Annotator, refs);
+
+  fprintf(stderr, "FREEING ANNOTATOR %p\n", ar);
+
+  free((char*)ar->cmd);
+  free((char*)ar->annotation_type);
+  free(ar);
+}
+
+Annotator *new_annotator(char *cmd, char *annotation_type) {
+  Annotator *ar = malloc(sizeof(*ar));
+
+  ar->cmd = strdup(cmd);
+  ar->annotation_type = strdup(annotation_type);
+  ar->refs = (struct refs){free_annotator, 1};
+
+  return ar;
+}
+
+void annotator_ref_inc(Annotator *ar) {
+  ref_inc(&ar->refs);
+}
+
+void annotator_ref_dec(Annotator *ar) {
+  ref_dec(&ar->refs);
+}
+
+
+struct annotator_process {
   Buffer *buffer;
   AnnotationParser *parser;
   size_t woffset;
@@ -17,7 +54,7 @@ struct annotator {
   int rfd;
 };
 
-Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
+AnnotatorProcess *new_annotator_process(Annotator *ar, Buffer *b) {
   char* shell;
   pid_t pid;
 
@@ -25,7 +62,7 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
   int annotation_fds[2];
   int flags;
 
-  Annotator *ar;
+  AnnotatorProcess *ap;
 
   pipe(content_fds);
   pipe(annotation_fds);
@@ -47,7 +84,7 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
 
       setpgrp();
 
-      execl(shell, shell, "-c", cmd, NULL);
+      execl(shell, shell, "-c", ar->cmd, NULL);
       perror("execl");
       exit(EXIT_FAILURE);
   }
@@ -62,52 +99,56 @@ Annotator *new_annotator(Buffer *b, char *cmd, char *annotation_type) {
   }
   fcntl(content_fds[1], F_SETFL, flags | O_NONBLOCK);
 
-  ar = malloc(sizeof(*ar));
+  ap = malloc(sizeof(*ap));
 
-  ar->buffer = b;
-  ar->parser = new_annotation_parser(copy_string(annotation_type));
-  ar->pid = pid;
-  ar->wfd = content_fds[1];
-  ar->rfd = annotation_fds[0];
-  ar->woffset = 0;
+  ap->buffer = b;
+  ap->parser = new_annotation_parser(strdup(ar->annotation_type));
+  ap->pid = pid;
+  ap->wfd = content_fds[1];
+  ap->rfd = annotation_fds[0];
+  ap->woffset = 0;
 
-  poll_registry_add(PI_ANNOTATOR_WRITE, ar, ar->wfd);
-  poll_registry_add(PI_ANNOTATOR_READ, ar, ar->rfd);
+  poll_registry_add(PI_ANNOTATOR_WRITE, ap, ap->wfd);
+  poll_registry_add(PI_ANNOTATOR_READ, ap, ap->rfd);
 
-  return ar;
+  return ap;
 }
 
-void annotator_write(Annotator *ar) {
-  int n = buffer_len(ar->buffer) - ar->woffset;
+void annotator_process_write(AnnotatorProcess *ap) {
+  int n = buffer_len(ap->buffer) - ap->woffset;
   int written;
 
   if (n > 0) {
-    written = write(ar->wfd, buffer_content(ar->buffer, ar->woffset), n);
+    written = write(ap->wfd, buffer_content(ap->buffer, ap->woffset), n);
 
     if (written >= 0) {
-      fprintf(stderr, "wrote %d bytes to annotator %d\n", written, ar->wfd);
-      ar->woffset += written;
+      fprintf(stderr, "wrote %d bytes to annotator %d\n", written, ap->wfd);
+      ap->woffset += written;
     } else if (errno == EAGAIN) {
-      fprintf(stderr, "could not write %d bytes to annotator %d\n", n, ar->wfd);
+      fprintf(stderr, "could not write %d bytes to annotator %d\n", n, ap->wfd);
     } else {
       perror("write");
       exit(EXIT_FAILURE);
     }
   }
 
-  if (ar->woffset == buffer_len(ar->buffer) && !buffer_is_running(ar->buffer)) {
-    close(ar->wfd);
-    poll_registry_remove(ar->wfd);
+  if (ap->woffset == buffer_len(ap->buffer) && !buffer_is_running(ap->buffer)) {
+    close(ap->wfd);
+    poll_registry_remove(ap->wfd);
   }
 }
 
-ssize_t annotator_read(Annotator *ar) {
+int annotator_process_should_poll_read(AnnotatorProcess *ap) {
+  return ap->woffset < buffer_len(ap->buffer) || !buffer_is_running(ap->buffer);
+}
+
+ssize_t annotator_process_read(AnnotatorProcess *ap) {
   char *buf = malloc(ANNOTATOR_READ_LEN);
   ssize_t n;
 
   Annotation *a;
 
-  if ((n = read(ar->rfd, buf, ANNOTATOR_READ_LEN)) == -1) {
+  if ((n = read(ap->rfd, buf, ANNOTATOR_READ_LEN)) == -1) {
     perror("read");
     exit(EXIT_FAILURE);
   }
@@ -115,35 +156,35 @@ ssize_t annotator_read(Annotator *ar) {
   fprintf(stderr, "read %ld bytes in annotator_read\n", n);
 
   if (n) {
-    annotation_parser_write(ar->parser, buf, n);
+    annotation_parser_write(ap->parser, buf, n);
 
-    while ((a = annotation_parser_read(ar->parser)) != NULL) {
-      buffer_add_annotation(ar->buffer, a);
+    while ((a = annotation_parser_read(ap->parser)) != NULL) {
+      buffer_add_annotation(ap->buffer, a);
       annotation_ref_dec(a);
     }
   } else {
-    waitpid(ar->pid, NULL, 0);
-    close(ar->rfd);
-    poll_registry_remove(ar->rfd);
-    free_annotator(ar);
+    waitpid(ap->pid, NULL, 0);
+    close(ap->rfd);
+    poll_registry_remove(ap->rfd);
+    free_annotator_process(ap);
   }
 
   return n;
 }
 
-void annotator_read_all(Annotator *ar) {
-  while (annotator_read(ar));
+void annotator_process_read_all(AnnotatorProcess *ap) {
+  while (annotator_process_read(ap));
 }
 
-void kill_annotator(Annotator *ar) {
-  if (kill(ar->pid, SIGTERM) < 0) {
+void kill_annotator_process(AnnotatorProcess *ap) {
+  if (kill(ap->pid, SIGTERM) < 0) {
     perror("kill");
     exit(EXIT_FAILURE);
   }
 
-  waitpid(ar->pid, NULL, 0);
+  waitpid(ap->pid, NULL, 0);
 }
 
-void free_annotator(Annotator *ar) {
-  free(ar);
+void free_annotator_process(AnnotatorProcess *ap) {
+  free(ap);
 }

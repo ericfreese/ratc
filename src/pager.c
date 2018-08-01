@@ -5,12 +5,34 @@
 #include "pager.h"
 #include "refs.h"
 
+typedef struct annotator_list_item AnnotatorListItem;
+struct annotator_list_item {
+  AnnotatorListItem *next;
+  Annotator *annotator;
+};
+
+AnnotatorListItem *new_annotator_list_item(Annotator *ar, AnnotatorListItem *next) {
+  AnnotatorListItem *ali = malloc(sizeof *ali);
+
+  annotator_ref_inc(ar);
+  ali->annotator = ar;
+  ali->next = next;
+
+  return ali;
+}
+
+void free_annotator_list_item(AnnotatorListItem *ali) {
+  annotator_ref_dec(ali->annotator);
+  free(ali);
+}
+
 struct pager {
   char *cmd;
   Buffer *buffer;
   int scroll;
   int cursor;
   Box *box;
+  AnnotatorListItem *annotators;
 
   struct refs refs;
 };
@@ -19,6 +41,12 @@ void free_pager(const struct refs *r) {
   Pager *p = container_of(r, Pager, refs);
 
   fprintf(stderr, "FREEING PAGER %p\n", p);
+
+  AnnotatorListItem *next;
+  for (AnnotatorListItem *cursor = p->annotators; cursor != NULL; cursor = next) {
+    next = cursor->next;
+    free_annotator_list_item(cursor);
+  }
 
   if (p->buffer) {
     free_buffer(p->buffer);
@@ -35,6 +63,7 @@ Pager *new_pager(char *cmd) {
   p->cmd = cmd;
   p->box = new_box(3, 3, 100, 20);
   p->refs = (struct refs){free_pager, 1};
+  p->annotators = NULL;
 
   run_pager_command(p);
 
@@ -79,6 +108,10 @@ void run_pager_command(Pager *p) {
   close(fds[1]);
 
   p->buffer = new_buffer(pid, fds[0]);
+
+  for (AnnotatorListItem *cursor = p->annotators; cursor != NULL; cursor = cursor->next) {
+    new_annotator_process(cursor->annotator, p->buffer);
+  }
 }
 
 void cancel_pager_command(Pager *p) {
@@ -116,6 +149,11 @@ void set_pager_box(Pager *p, int left, int top, int width, int height) {
 
 Box *get_pager_box(Pager *p) {
   return p->box;
+}
+
+void pager_add_annotator(Pager *p, Annotator *ar) {
+  p->annotators = new_annotator_list_item(ar, p->annotators);
+  new_annotator_process(ar, p->buffer);
 }
 
 //Widget *new_pager_widget(Pager *p) {

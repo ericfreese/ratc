@@ -137,18 +137,75 @@ duk_ret_t js_new_pager(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_pager_add_annotator(duk_context *duk_ctx) {
+  duk_get_prop_string(duk_ctx, 0, DUK_HIDDEN_SYMBOL("__annotator__"));
+  Annotator *ar = duk_get_pointer(duk_ctx, -1);
+
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_add_annotator(p, ar);
+
+  return 0;
+}
+
 /* Adds a `Pager` constructor to an object on the top of the stack */
 void js_pager_setup(duk_context *duk_ctx) {
   duk_push_c_function(duk_ctx, js_new_pager, 1);
 
   duk_push_object(duk_ctx);
 
-  //duk_push_c_function(duk_ctx, js_finalize_pager, 1);
-  //duk_set_finalizer(duk_ctx, -2);
+  duk_push_c_function(duk_ctx, js_pager_add_annotator, 1);
+  duk_put_prop_string(duk_ctx, -2, "addAnnotator");
 
   duk_put_prop_string(duk_ctx, -2, "prototype");
 
   duk_put_prop_string(duk_ctx, -2, "Pager");
+}
+
+duk_ret_t js_finalize_annotator(duk_context *duk_ctx) {
+  duk_get_prop_string(duk_ctx, 0, DUK_HIDDEN_SYMBOL("__annotator__"));
+
+  fprintf(stderr, "finalizing annotator: %p\n", duk_get_pointer(duk_ctx, -1));
+  annotator_ref_dec(duk_get_pointer(duk_ctx, -1));
+
+  return 0;
+}
+
+duk_ret_t js_new_annotator(duk_context *duk_ctx) {
+  if (!duk_is_constructor_call(duk_ctx)) {
+    return 0;
+  }
+
+  Annotator *ar = new_annotator((char*)duk_get_string(duk_ctx, 0), (char*)duk_get_string(duk_ctx, 1));
+
+  fprintf(stderr, "created annotator: %p\n", ar);
+
+  duk_push_this(duk_ctx);
+
+  duk_push_c_function(duk_ctx, js_finalize_annotator, 1);
+  duk_set_finalizer(duk_ctx, -2);
+
+  duk_push_pointer(duk_ctx, ar);
+  duk_put_prop_string(duk_ctx, -2, DUK_HIDDEN_SYMBOL("__annotator__"));
+
+  return 0;
+}
+
+/* Adds a `Annotator` constructor to an object on the top of the stack */
+void js_annotator_setup(duk_context *duk_ctx) {
+  duk_push_c_function(duk_ctx, js_new_annotator, 2);
+
+  duk_push_object(duk_ctx);
+
+  //duk_push_c_function(duk_ctx, js_pager_add_annotator, 1);
+  //duk_put_prop_string(duk_ctx, -2, "addAnnotator");
+
+  duk_put_prop_string(duk_ctx, -2, "prototype");
+
+  duk_put_prop_string(duk_ctx, -2, "Annotator");
 }
 
 duk_ret_t js_rat_push(duk_context *duk_ctx) {
@@ -177,6 +234,7 @@ void js_rat_setup(duk_context *duk_ctx) {
   duk_put_prop_string(duk_ctx, -2, "printPager");
 
   js_pager_setup(duk_ctx);
+  js_annotator_setup(duk_ctx);
 
   duk_push_c_function(duk_ctx, js_rat_pop, 0);
   duk_put_prop_string(duk_ctx, -2, "pop");

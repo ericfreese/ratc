@@ -6,7 +6,6 @@ struct annotation {
   uint32_t end;
   char *type;
   char *value;
-
   struct refs refs;
 };
 

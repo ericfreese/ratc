@@ -40,8 +40,9 @@ void rat_init() {
 
   duk_eval_string_noresult(duk_ctx,
     "Rat.addEventListener(['p'], function() {"
-      "Rat.print('IT WORKED');"
-      "Rat.push(new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done'));"
+      "var p = new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done');"
+      "p.addAnnotator(new Rat.Annotator('./test-annotator foo | tee >(xxd >> debug.log)', 'bar'));"
+      "Rat.push(p);"
     "});"
 
     "Rat.addEventListener(['q'], function() {"
@@ -140,17 +141,18 @@ void rat_run() {
 
           case PI_ANNOTATOR_WRITE:
             if (pfd[i].revents & POLLOUT) {
-              annotator_write(pis->items[i]->ptr);
+              fprintf(stderr, "POLLOUT ready for annotator write %ld\n", i);
+              annotator_process_write(pis->items[i]->ptr);
             }
             break;
 
           case PI_ANNOTATOR_READ:
             if (pfd[i].revents & POLLHUP) {
               fprintf(stderr, "POLLHUP ready for annotator read %ld\n", i);
-              annotator_read_all(pis->items[i]->ptr);
+              annotator_process_read_all(pis->items[i]->ptr);
             } else if (pfd[i].revents & POLLIN) {
               fprintf(stderr, "POLLIN ready for annotator read %ld\n", i);
-              annotator_read(pis->items[i]->ptr);
+              annotator_process_read(pis->items[i]->ptr);
             }
             break;
 
