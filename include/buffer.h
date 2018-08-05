@@ -1,5 +1,4 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#pragma once
 
 #include <signal.h>
 #include <stdint.h>
@@ -28,5 +27,3 @@ void buffer_add_annotation(Buffer *b, Annotation *a);
 size_t buffer_len(Buffer *b);
 const char* buffer_content(Buffer *b, size_t offset);
 int buffer_is_running(Buffer *b);
-
-#endif

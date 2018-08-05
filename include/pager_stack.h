@@ -1,5 +1,4 @@
-#ifndef PAGER_STACK_H
-#define PAGER_STACK_H
+#pragma once
 
 #include "pager.h"
 
@@ -11,5 +10,3 @@ void pager_stack_push(PagerStack *ps, Pager *p);
 void pager_stack_pop(PagerStack *ps);
 size_t pager_stack_len(PagerStack *ps);
 void render_pager_stack(PagerStack *ps);
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef PAGER_H
-#define PAGER_H
+#pragma once
 
 #include "annotator.h"
 #include "buffer.h"
@@ -17,5 +16,3 @@ void set_pager_box(Pager *p, int left, int top, int width, int height);
 Box *get_pager_box(Pager *p);
 void pager_add_annotator(Pager *p, Annotator *ar);
 //Widget *new_pager_widget(Pager *p);
-
-#endif

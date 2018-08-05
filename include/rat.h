@@ -1,5 +1,4 @@
-#ifndef RAT_H
-#define RAT_H
+#pragma once
 
 #include "event_handlers.h"
 #include "key_seq.h"
@@ -11,5 +10,3 @@ void rat_cleanup();
 void rat_push_pager(Pager *p);
 void rat_pop_pager();
 void rat_add_event_listener(KeySeq *trigger, JSEventHandler *jeh);
-
-#endif

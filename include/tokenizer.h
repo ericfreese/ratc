@@ -1,5 +1,4 @@
-#ifndef TOKENIZER_H
-#define TOKENIZER_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -10,5 +9,3 @@ Tokenizer *new_tokenizer();
 void free_tokenizer(Tokenizer *tr);
 void tokenizer_write(Tokenizer *tr, char *buf, size_t len);
 Token *tokenizer_read(Tokenizer *tr);
-
-#endif

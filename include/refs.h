@@ -1,5 +1,4 @@
-#ifndef REF_H
-#define REF_H
+#pragma once
 
 #include "stdlib.h"
 #include "stddef.h"
@@ -23,6 +22,3 @@ static inline void ref_dec(const struct refs *r) {
         r->free(r);
     }
 }
-
-#endif
-

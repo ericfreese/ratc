@@ -1,5 +1,4 @@
-#ifndef EVENT_HANDLERS_H
-#define EVENT_HANDLERS_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -11,5 +10,3 @@ EventHandlers *new_event_handlers();
 void free_event_handlers(EventHandlers *ehs);
 void event_handlers_add(EventHandlers *ehs, KeySeq *trigger, JSEventHandler *jeh);
 size_t event_handlers_handle(EventHandlers *ehs, KeySeq *ks);
-
-#endif

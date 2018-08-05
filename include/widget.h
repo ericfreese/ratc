@@ -1,5 +1,4 @@
-#ifndef WIDGET_H
-#define WIDGET_H
+#pragma once
 
 #include "box.h"
 
@@ -12,5 +11,3 @@ Widget *new_widget(void *ptr, wfn_render render, wfn_set_box set_box, wfn_get_bo
 void render_widget(Widget *w);
 void set_widget_box(Widget *w, int left, int top, int width, int height);
 Box *get_widget_box(Widget *w);
-
-#endif

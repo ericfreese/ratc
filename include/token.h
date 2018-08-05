@@ -1,5 +1,4 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#pragma once
 
 typedef enum {
   TK_NONE = 0,
@@ -13,5 +12,3 @@ Token *new_token(TokenType type, const char *value);
 void free_token(Token *t);
 TokenType token_type(Token *t);
 const char* token_value(Token *t);
-
-#endif

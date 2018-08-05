@@ -1,9 +1,6 @@
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 
 #include <stdlib.h>
 #include <string.h>
 
 char *copy_string(char *str);
-
-#endif

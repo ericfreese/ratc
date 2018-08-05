@@ -1,5 +1,4 @@
-#ifndef ANNOTATION_H
-#define ANNOTATION_H
+#pragma once
 
 #include <stdint.h>
 
@@ -11,5 +10,3 @@ uint32_t annotation_start(Annotation *a);
 uint32_t annotation_end(Annotation *a);
 const char* annotation_type(Annotation *a);
 const char* annotation_value(Annotation *a);
-
-#endif

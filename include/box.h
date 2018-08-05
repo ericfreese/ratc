@@ -1,5 +1,4 @@
-#ifndef BOX_H
-#define BOX_H
+#pragma once
 
 typedef struct box Box;
 Box *new_box(int left, int top, int width, int height);
@@ -12,5 +11,3 @@ int box_width(Box *b);
 void box_set_width(Box *b, int width);
 int box_height(Box *b);
 void box_set_height(Box *b, int height);
-
-#endif

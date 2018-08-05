@@ -1,5 +1,4 @@
-#ifndef STRBUF_H
-#define STRBUF_H
+#pragma once
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,5 +12,3 @@ typedef struct {
 Strbuf *new_strbuf(char *str);
 void free_strbuf(Strbuf *strbuf);
 void strbuf_write(Strbuf *strbuf, char *str);
-
-#endif
