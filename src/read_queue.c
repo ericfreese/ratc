@@ -24,7 +24,7 @@ void free_read_queue(ReadQueue *rq) {
   free(rq);
 }
 
-void read_queue_write(ReadQueue *rq, void *buf, size_t len) {
+void read_queue_write(ReadQueue *rq, const void *buf, size_t len) {
   ReadQueueChunk *chunk = new_read_queue_chunk(buf, len);
 
   if (rq->last != NULL) {
@@ -105,7 +105,7 @@ void read_queue_commit(ReadQueue *rq) {
   rq->offset = rq->tmp_offset = rq->tmp_offset - chopped_len;
 }
 
-ReadQueueChunk *new_read_queue_chunk(void *buf, size_t len) {
+ReadQueueChunk *new_read_queue_chunk(const void *buf, size_t len) {
   ReadQueueChunk *rqc = malloc(sizeof(*rqc));
 
   rqc->buf = buf;
@@ -116,6 +116,6 @@ ReadQueueChunk *new_read_queue_chunk(void *buf, size_t len) {
 }
 
 void free_read_queue_chunk(ReadQueueChunk *rqc) {
-  free(rqc->buf);
+  free((void*)rqc->buf);
   free(rqc);
 }

@@ -4,6 +4,7 @@
 
 #include "pager.h"
 #include "refs.h"
+#include "io.h"
 
 typedef struct annotator_list_item AnnotatorListItem;
 struct annotator_list_item {
@@ -48,6 +49,7 @@ void free_pager(const struct refs *r) {
     free_annotator_list_item(cursor);
   }
 
+  // TODO: Can we remove this check? We should always have a buffer right?
   if (p->buffer) {
     free_buffer(p->buffer);
   }
@@ -79,43 +81,17 @@ void pager_ref_dec(Pager *p) {
 }
 
 void run_pager_command(Pager *p) {
-  int fds[2];
-  char* shell;
-  pid_t pid;
+  p->buffer = new_buffer();
 
-  pipe(fds);
-
-  switch (pid = fork()) {
-    case -1:
-      perror("fork");
-      exit(EXIT_FAILURE);
-    case 0:
-      shell = getenv("SHELL");
-
-      dup2(fds[1], STDOUT_FILENO);
-      dup2(fds[1], STDERR_FILENO);
-
-      close(fds[0]);
-      close(fds[1]);
-
-      setpgrp();
-
-      execl(shell, shell, "-c", p->cmd, NULL);
-      perror("execl");
-      exit(EXIT_FAILURE);
-  }
-
-  close(fds[1]);
-
-  p->buffer = new_buffer(pid, fds[0]);
+  io_start_buffer(p->buffer, p->cmd);
 
   for (AnnotatorListItem *cursor = p->annotators; cursor != NULL; cursor = cursor->next) {
-    new_annotator_process(cursor->annotator, p->buffer);
+    io_start_annotating_buffer(p->buffer, cursor->annotator);
   }
 }
 
 void cancel_pager_command(Pager *p) {
-  close_buffer(p->buffer);
+  io_close_buffer(p->buffer);
 }
 
 Buffer *get_buffer(Pager *p) {
@@ -153,7 +129,7 @@ Box *get_pager_box(Pager *p) {
 
 void pager_add_annotator(Pager *p, Annotator *ar) {
   p->annotators = new_annotator_list_item(ar, p->annotators);
-  new_annotator_process(ar, p->buffer);
+  io_start_annotating_buffer(p->buffer, ar);
 }
 
 //Widget *new_pager_widget(Pager *p) {

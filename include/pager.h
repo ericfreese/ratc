@@ -1,6 +1,7 @@
 #ifndef PAGER_H
 #define PAGER_H
 
+#include "annotator.h"
 #include "buffer.h"
 #include "widget.h"
 

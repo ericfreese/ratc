@@ -1,29 +1,31 @@
-#include "buffer.h"
+#include <string.h>
+
+#include "annotation.h"
 #include "refs.h"
 
 struct annotation {
   uint32_t start;
   uint32_t end;
-  char *type;
-  char *value;
+  const char *type;
+  const char *value;
   struct refs refs;
 };
 
 void free_annotation(const struct refs *r) {
   Annotation *a = container_of(r, Annotation, refs);
 
-  free(a->type);
-  free(a->value);
+  free((char*)a->type);
+  free((char*)a->value);
   free(a);
 }
 
-Annotation *new_annotation(uint32_t start, uint32_t end, char *type, char *value) {
+Annotation *new_annotation(uint32_t start, uint32_t end, const char *type, const char *value) {
   Annotation *a = malloc(sizeof(*a));
 
   a->start = start;
   a->end = end;
-  a->type = type;
-  a->value = value;
+  a->type = strdup(type);
+  a->value = strdup(value);
   a->refs = (struct refs){free_annotation, 1};
 
   return a;

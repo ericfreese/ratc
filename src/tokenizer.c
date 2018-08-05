@@ -2,44 +2,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "buffer.h"
+#include "tokenizer.h"
+#include "read_queue.h"
 
-struct token {
-  TokenType type;
-  char *value;
-};
-
-Token *new_token(TokenType type, char *value) {
-  Token *t = malloc(sizeof(*t));
-
-  t->type = type;
-  t->value = value;
-
-  return t;
-}
-
-void free_token(Token *t) {
-  if (t->type == TK_CONTENT) {
-    free(t->value);
-  }
-
-  free(t);
-}
-
-TokenType token_type(Token *t) {
-  return t->type;
-}
-
-const char* token_value(Token *t) {
-  return t->value;
-}
 
 struct tokenizer {
   ReadQueue *rq;
 };
 
 Tokenizer *new_tokenizer() {
-  Tokenizer *tr = (Tokenizer*)malloc(sizeof(*tr));
+  Tokenizer *tr = malloc(sizeof *tr);
   tr->rq = new_read_queue();
   return tr;
 }

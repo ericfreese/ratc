@@ -19,15 +19,16 @@ _OBJ = \
 	buffer.o \
 	duktape.o \
 	event_handlers.o \
+	io.o \
 	js_api.o \
 	key_seq.o \
 	main.o \
 	pager.o \
 	pager_stack.o \
-	poll_registry.o \
 	rat.o \
 	read_queue.o \
 	strbuf.o \
+	token.o \
 	tokenizer.o \
 	util.o \
 	widget.o
