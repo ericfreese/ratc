@@ -45,7 +45,6 @@ struct buffer {
 };
 
 Buffer *new_buffer() {
-
   Buffer *b = (Buffer*)malloc(sizeof(Buffer));
 
   b->stream_len = 0;
