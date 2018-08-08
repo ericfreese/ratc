@@ -69,8 +69,6 @@ size_t read_queue_read(ReadQueue *rq, void *buf, size_t len) {
     }
 
     chunk_start += cursor->len;
-
-    break;
   }
 
   //fprintf(stderr, "read %ld bytes from read queue\n", n);
