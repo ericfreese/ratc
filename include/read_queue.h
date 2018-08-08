@@ -3,23 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct ReadQueueChunk ReadQueueChunk;
-struct ReadQueueChunk {
-  const void *buf;
-  size_t len;
-  ReadQueueChunk *next;
-};
-
-typedef struct {
-  ReadQueueChunk *first;
-  ReadQueueChunk *last;
-  size_t offset;
-  size_t tmp_offset;
-} ReadQueue;
-
-ReadQueueChunk *new_read_queue_chunk(const void *buf, size_t len);
-void free_read_queue_chunk(ReadQueueChunk *rq);
-
+typedef struct read_queue ReadQueue;
 ReadQueue *new_read_queue();
 void free_read_queue(ReadQueue *rq);
 void read_queue_write(ReadQueue *rq, const void *buf, size_t len);

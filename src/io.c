@@ -134,6 +134,7 @@ ssize_t buffer_io_read(BufferIO *bio) {
     bio->rdone = 1;
   }
 
+  free(buf);
   return n;
 }
 
@@ -255,6 +256,7 @@ ssize_t annotator_io_read(AnnotatorIO *aio) {
     aio->rdone = 1;
   }
 
+  free(buf);
   return n;
 }
 

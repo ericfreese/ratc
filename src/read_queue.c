@@ -1,6 +1,38 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "read_queue.h"
+
+typedef struct read_queue_chunk ReadQueueChunk;
+struct read_queue_chunk {
+  const void *buf;
+  size_t len;
+  ReadQueueChunk *next;
+};
+
+ReadQueueChunk *new_read_queue_chunk(const void *buf, size_t len) {
+  ReadQueueChunk *rqc = malloc(sizeof(*rqc));
+
+  rqc->buf = malloc(len);
+  memcpy((char*)rqc->buf, buf, len);
+
+  rqc->len = len;
+  rqc->next = NULL;
+
+  return rqc;
+}
+
+void free_read_queue_chunk(ReadQueueChunk *rqc) {
+  free((void*)rqc->buf);
+  free(rqc);
+}
+
+struct read_queue {
+  ReadQueueChunk *first;
+  ReadQueueChunk *last;
+  size_t offset;
+  size_t tmp_offset;
+};
 
 ReadQueue *new_read_queue() {
   ReadQueue *rq = malloc(sizeof(*rq));
@@ -101,19 +133,4 @@ void read_queue_commit(ReadQueue *rq) {
   }
 
   rq->offset = rq->tmp_offset = rq->tmp_offset - chopped_len;
-}
-
-ReadQueueChunk *new_read_queue_chunk(const void *buf, size_t len) {
-  ReadQueueChunk *rqc = malloc(sizeof(*rqc));
-
-  rqc->buf = buf;
-  rqc->len = len;
-  rqc->next = NULL;
-
-  return rqc;
-}
-
-void free_read_queue_chunk(ReadQueueChunk *rqc) {
-  free((void*)rqc->buf);
-  free(rqc);
 }
