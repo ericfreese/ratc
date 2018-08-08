@@ -4,7 +4,6 @@
 #include "key_seq.h"
 #include "pager.h"
 #include "rat.h"
-#include "util.h"
 
 struct js_event_handler {
   char *stash_key;

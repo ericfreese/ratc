@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "key_seq.h"
-#include "util.h"
 
 typedef struct key_seq_item KeySeqItem;
 struct key_seq_item {
@@ -13,7 +13,7 @@ struct key_seq_item {
 KeySeqItem *new_key_seq_item(char *key) {
   KeySeqItem *ksi = malloc(sizeof *ksi);
 
-  ksi->key = copy_string(key);
+  ksi->key = strdup(key);
   ksi->next = NULL;
 
   return ksi;
