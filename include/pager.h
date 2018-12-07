@@ -15,4 +15,5 @@ void render_pager(Pager *p);
 void set_pager_box(Pager *p, int left, int top, int width, int height);
 Box *get_pager_box(Pager *p);
 void pager_add_annotator(Pager *p, Annotator *ar);
+void pager_reload(Pager *p);
 //Widget *new_pager_widget(Pager *p);

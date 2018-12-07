@@ -132,6 +132,11 @@ void pager_add_annotator(Pager *p, Annotator *ar) {
   io_start_annotating_buffer(p->buffer, ar);
 }
 
+void pager_reload(Pager *p) {
+  cancel_pager_command(p);
+  run_pager_command(p);
+}
+
 //Widget *new_pager_widget(Pager *p) {
 //  return new_widget(p, render_pager, set_pager_box, get_pager_box);
 //}
