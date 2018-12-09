@@ -17,7 +17,7 @@ Token *new_token(TokenType type, const char *value) {
 }
 
 void free_token(Token *t) {
-  if (t->type == TK_CONTENT) {
+  if (t->type == TK_CONTENT || t->type == TK_TERMSTYLE) {
     free((char*)t->value);
   }
 

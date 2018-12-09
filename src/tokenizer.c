@@ -316,17 +316,24 @@ Token *read_escape_sequence_token(Tokenizer *tr) {
   EscSeq *es = read_esc_seq(tr);
   //TermStyle *ts;
 
+  char *val;
+  size_t len;
+  FILE *stream = open_memstream(&val, &len);
+
   if (es == NULL) {
     return NULL;
   }
 
   for (EscSeqPart *cursor = es->first; cursor != NULL; cursor = cursor->next) {
+    fwrite(cursor->value, 1, strlen(cursor->value), stream);
     // Build up ts
   }
 
+  fclose(stream);
+
   free_esc_seq(es);
 
-  return new_token(TK_TERMSTYLE, "\x1b");
+  return new_token(TK_TERMSTYLE, val);
 }
 
 Token *tokenizer_read(Tokenizer *tr) {
