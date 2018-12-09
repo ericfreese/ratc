@@ -111,7 +111,7 @@ Token *read_newline_token(Tokenizer *tr) {
   read_queue_read(tr->rq, &ch, 1);
   read_queue_commit(tr->rq);
 
-  return new_token(TK_NEWLINE, "\n");
+  return new_newline_token("\n");
 }
 
 Token *read_content_token(Tokenizer *tr) {
@@ -143,7 +143,7 @@ Token *read_content_token(Tokenizer *tr) {
 
   fclose(stream);
 
-  return new_token(TK_CONTENT, val);
+  return new_content_token(val);
 }
 
 EscSeqPart *read_esc_seq_cs_priv_param(Tokenizer *tr) {
@@ -333,7 +333,7 @@ Token *read_escape_sequence_token(Tokenizer *tr) {
 
   free_esc_seq(es);
 
-  return new_token(TK_TERMSTYLE, val);
+  return new_termstyle_token(NULL, val);
 }
 
 Token *tokenizer_read(Tokenizer *tr) {

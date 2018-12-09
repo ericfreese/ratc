@@ -7,7 +7,7 @@
 MU_TEST(test_new) {
   Buffer *b = new_buffer();
 
-  buffer_handle_token(b, new_token(TK_CONTENT, "foo bar"));
+  buffer_handle_token(b, new_content_token("foo bar"));
 
   mu_check(buffer_len(b) == 7);
   mu_check(strcmp(buffer_content(b, 0), "foo bar") == 0);
