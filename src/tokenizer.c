@@ -106,11 +106,7 @@ int is_content_char(char ch) {
 }
 
 Token *read_newline_token(Tokenizer *tr) {
-  char ch;
-
-  read_queue_read(tr->rq, &ch, 1);
-  read_queue_commit(tr->rq);
-
+  read_queue_advance(tr->rq, 1);
   return new_newline_token("\n");
 }
 
