@@ -3,92 +3,27 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "esc_seq.h"
+#include "term_style.h"
 #include "tokenizer.h"
 #include "read_queue.h"
 
 typedef enum {
-  ES_DEFAULT = 0,
-  ES_ESC,
-  ES_CS_PARAM,
-  ES_CS_INTER
-} EscSeqState;
-
-typedef enum {
-  ESP_UNKNOWN = 0,
-  ESP_ESC,
-  ESP_FE,
-  ESP_PRIV_PARAM,
-  ESP_PARAM_NUM,
-  ESP_PARAM_SEP,
-  ESP_SEP,
-  ESP_INTER,
-  ESP_FINAL
-} EscSeqPartType;
-
-typedef struct esc_seq_part EscSeqPart;
-struct esc_seq_part {
-  EscSeqPart *next;
-  EscSeqPartType type;
-  const char *value;
-};
-
-EscSeqPart *new_esc_seq_part(EscSeqPartType type, const char *value) {
-  EscSeqPart *esp = malloc(sizeof *esp);
-
-  esp->next = NULL;
-  esp->type = type;
-  esp->value = strdup(value);
-
-  return esp;
-}
-
-void free_esc_seq_part(EscSeqPart *esp) {
-  free((char*)esp->value);
-  free(esp);
-}
-
-typedef struct esc_seq EscSeq;
-struct esc_seq {
-  EscSeqPart *first;
-  EscSeqPart *last;
-};
-
-EscSeq *new_esc_seq() {
-  EscSeq *es = malloc(sizeof *es);
-
-  es->first = NULL;
-  es->last = NULL;
-
-  return es;
-}
-
-void free_esc_seq(EscSeq *es) {
-  EscSeqPart *next;
-
-  for (EscSeqPart *cursor = es->first; cursor != NULL; cursor = next) {
-    next = cursor->next;
-    free_esc_seq_part(cursor);
-  }
-
-  free(es);
-}
-
-void esc_seq_add_part(EscSeq *es, EscSeqPart *esp) {
-  if (es->last != NULL) {
-    es->last->next = esp;
-    es->last = esp;
-  } else {
-    es->first = es->last = esp;
-  }
-}
+  TR_DEFAULT = 0,
+  TR_ESC,
+  TR_CS_PARAM,
+  TR_CS_INTER
+} TokenizerState;
 
 struct tokenizer {
   ReadQueue *rq;
+  TermStyle *ts;
 };
 
 Tokenizer *new_tokenizer() {
   Tokenizer *tr = malloc(sizeof *tr);
   tr->rq = new_read_queue();
+  tr->ts = new_term_style();
   return tr;
 }
 
@@ -214,41 +149,41 @@ EscSeq *read_esc_seq(Tokenizer *tr) {
   EscSeq *es = new_esc_seq();
   EscSeqPart *esp;
 
-  EscSeqState state;
+  TokenizerState state;
 
   char buf[2];
   buf[1] = '\0';
 
   read_queue_read(tr->rq, &buf, 1);
-  state = ES_ESC;
+  state = TR_ESC;
   esc_seq_add_part(es, new_esc_seq_part(ESP_ESC, buf));
 
-  while (state != ES_DEFAULT) {
+  while (state != TR_DEFAULT) {
     if (!(*buf = read_queue_peek(tr->rq))) {
       goto abort;
     }
 
     switch (state) {
-      case ES_ESC:
+      case TR_ESC:
         if (*buf >= 0x40 && *buf <= 0x5f) {
           if (*buf == '[') {
-            state = ES_CS_PARAM;
+            state = TR_CS_PARAM;
           } else {
-            state = ES_DEFAULT;
+            state = TR_DEFAULT;
           }
 
           esc_seq_add_part(es, new_esc_seq_part(ESP_FE, buf));
         } else {
-          state = ES_DEFAULT;
+          state = TR_DEFAULT;
           esc_seq_add_part(es, new_esc_seq_part(ESP_UNKNOWN, buf));
         }
 
         read_queue_advance(tr->rq, 1);
         break;
 
-      case ES_CS_PARAM:
+      case TR_CS_PARAM:
         if (*buf >= 0x20 && *buf <= 0x2f) {
-          state = ES_CS_INTER;
+          state = TR_CS_INTER;
           esc_seq_add_part(es, new_esc_seq_part(ESP_INTER, buf));
           read_queue_advance(tr->rq, 1);
         } else if (*buf >= 0x30 && *buf <= 0x39) {
@@ -270,30 +205,30 @@ EscSeq *read_esc_seq(Tokenizer *tr) {
 
           esc_seq_add_part(es, esp);
         } else if (*buf >= 0x40 && *buf <= 0x7e) {
-          state = ES_DEFAULT;
+          state = TR_DEFAULT;
           esc_seq_add_part(es, new_esc_seq_part(ESP_FINAL, buf));
           read_queue_advance(tr->rq, 1);
         } else {
-          state = ES_DEFAULT;
+          state = TR_DEFAULT;
           esc_seq_add_part(es, new_esc_seq_part(ESP_UNKNOWN, buf));
           read_queue_advance(tr->rq, 1);
         }
         break;
 
-      case ES_CS_INTER:
+      case TR_CS_INTER:
         if (*buf >= 0x20 && *buf <= 0x2f) {
           esc_seq_add_part(es, new_esc_seq_part(ESP_INTER, buf));
         } else if (*buf >= 0x40 && *buf <= 0x7e) {
-          state = ES_DEFAULT;
+          state = TR_DEFAULT;
           esc_seq_add_part(es, new_esc_seq_part(ESP_FINAL, buf));
         } else {
-          state = ES_DEFAULT;
+          state = TR_DEFAULT;
           esc_seq_add_part(es, new_esc_seq_part(ESP_UNKNOWN, buf));
         }
 
         read_queue_advance(tr->rq, 1);
         break;
-      case ES_DEFAULT:
+      case TR_DEFAULT:
         /* not possible */
         goto abort;
     }
@@ -320,9 +255,10 @@ Token *read_escape_sequence_token(Tokenizer *tr) {
     return NULL;
   }
 
+  term_style_apply(tr->ts, es);
+
   for (EscSeqPart *cursor = es->first; cursor != NULL; cursor = cursor->next) {
     fwrite(cursor->value, 1, strlen(cursor->value), stream);
-    // Build up ts
   }
 
   fclose(stream);
