@@ -324,7 +324,7 @@ Token *read_escape_sequence_token(Tokenizer *tr) {
     // Build up ts
   }
 
-  free(es);
+  free_esc_seq(es);
 
   return new_token(TK_TERMSTYLE, "\x1b");
 }
