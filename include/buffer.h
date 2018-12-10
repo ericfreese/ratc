@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "annotation.h"
+#include "render_lines.h"
 #include "token.h"
 
 typedef struct annotations Annotations;
@@ -21,7 +22,7 @@ typedef struct buffer Buffer;
 Buffer *new_buffer();
 void free_buffer(Buffer *b);
 void buffer_handle_token(Buffer *b, Token *t);
-const char **get_buffer_lines(Buffer *b, size_t start, size_t num);
+RenderLines *get_render_lines(Buffer *b, size_t start, size_t num);
 //void buffer_list_annotations(Buffer *b);
 void buffer_add_annotation(Buffer *b, Annotation *a);
 size_t buffer_len(Buffer *b);

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "buffer.h"
-#include "highlights.h"
+#include "render_lines.h"
 
 typedef struct line_ends LineEnds;
 struct line_ends {
@@ -34,6 +34,93 @@ void push_line_end(LineEnds *le, size_t offset) {
   le->offsets[le->len] = offset;
 
   le->len++;
+}
+
+typedef struct highlight Highlight;
+struct highlight {
+  TermStyle *ts;
+  size_t start;
+  size_t end;
+  Highlight *next;
+};
+
+typedef struct highlights Highlights;
+struct highlights {
+  Highlight *first;
+  Highlight *last;
+  int highlighting;
+};
+
+Highlights *new_highlights() {
+  Highlights *hs = malloc(sizeof *hs);
+
+  hs->first = hs->last = NULL;
+  hs->highlighting = 0;
+
+  return hs;
+}
+
+void free_highlights(Highlights *hs) {
+  Highlight *next;
+
+  for (Highlight *cursor = hs->first; cursor != NULL; cursor = next) {
+    next = cursor->next;
+    free(cursor->ts);
+    free(cursor);
+  }
+
+  free(hs);
+}
+
+void highlights_end(Highlights *hs, size_t offset) {
+  if (hs->last != NULL) {
+    hs->last->end = offset;
+  }
+
+  hs->highlighting = 0;
+}
+
+void highlights_start(Highlights *hs, TermStyle *ts, size_t offset) {
+  if (hs->highlighting) {
+    highlights_end(hs, offset);
+  }
+
+  if (term_style_is_default(ts)) {
+    return;
+  }
+
+  fprintf(stderr, "highlighting termstyle: fg='%d', bg='%d'\n", ts->fg, ts->bg);
+
+  Highlight *h = malloc(sizeof *h);
+
+  h->ts = term_style_dup(ts);
+  h->start = offset;
+  h->end = SIZE_MAX;
+  h->next = NULL;
+
+  if (hs->first == NULL) {
+    hs->first = hs->last = h;
+  } else {
+    hs->last->next = h;
+    hs->last = h;
+  }
+
+  hs->highlighting = 1;
+}
+
+// TODO: Implement as some more efficient data structure
+// - Tango tree?
+// - Red black tree? http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx
+// - Splay tree?
+// - Skip list w/ finger search? http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_skip.aspx
+Highlight *highlight_at_point(Highlights *hs, size_t point) {
+  for (Highlight *cursor = hs->first; cursor != NULL && cursor->start <= point; cursor = cursor->next) {
+    if (point >= cursor->start && point < cursor->end) {
+      return cursor;
+    }
+  }
+
+  return NULL;
 }
 
 struct buffer {
@@ -84,30 +171,51 @@ void buffer_handle_token(Buffer *b, Token *t) {
   }
 }
 
-const char **get_buffer_lines(Buffer *b, size_t start, size_t num) {
+RenderLines *get_render_lines(Buffer *b, size_t start, size_t num) {
   if (start >= b->line_ends->len) {
     num = 0;
   } else if (start + num > b->line_ends->len) {
     num = b->line_ends->len - start;
   }
 
-  char **buffer_lines = malloc((num + 1) * sizeof *buffer_lines);
-  size_t start_offset = 0;
-  size_t line_len;
+  RenderLines *rls = new_render_lines();
 
-  for (size_t i = 0, *next_offset = b->line_ends->offsets; i < num; i++, next_offset++) {
-    line_len = *next_offset - start_offset;
-
-    buffer_lines[i] = (char*)malloc((line_len + 1) * sizeof(*buffer_lines[i]));
-    memcpy((char*)buffer_lines[i], b->stream_str + start_offset, line_len);
-    buffer_lines[i][line_len] = '\0';
-
-    start_offset = *next_offset;
+  size_t start_offset;
+  if (start > 1) {
+    start_offset = b->line_ends->offsets[start - 1];
+  } else {
+    start_offset = 0;
   }
 
-  buffer_lines[num] = NULL;
+  size_t line_len;
 
-  return (const char**)buffer_lines;
+  size_t n = 0;
+  size_t *next_offset = &b->line_ends->offsets[start];
+  //Highlight *highlight = highlight_at_point(b->highlights, start_offset);
+
+  char *content;
+
+  while (n < num) {
+    RenderLine *rl = new_render_line();
+
+    line_len = *next_offset - start_offset;
+
+    content = malloc(line_len + 1);
+    memcpy(content, b->stream_str + start_offset, line_len);
+    content[line_len] = '\0';
+
+    render_line_add(rl, A_BOLD, content);
+    free(content);
+
+    start_offset = *next_offset;
+
+    render_lines_add(rls, rl);
+
+    n++;
+    next_offset++;
+  }
+
+  return rls;
 }
 
 //void buffer_list_annotations(Buffer *b) {

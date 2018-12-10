@@ -4,6 +4,7 @@
 
 #include "pager.h"
 #include "refs.h"
+#include "render_lines.h"
 #include "io.h"
 
 typedef struct annotator_list_item AnnotatorListItem;
@@ -99,21 +100,9 @@ Buffer *get_buffer(Pager *p) {
 }
 
 void render_pager(Pager *p) {
-  const char **buffer_lines;
-
-  buffer_lines = get_buffer_lines(p->buffer, 0, box_height(p->box));
-
-  init_pair(1, COLOR_CYAN, COLOR_BLACK);
-  attron(COLOR_PAIR(1));
-
-  for (int y = 0; buffer_lines[y] != NULL; y++) {
-    mvprintw(y + box_top(p->box), box_left(p->box), "%s", buffer_lines[y]);
-    free((char*)buffer_lines[y]);
-  }
-
-  attroff(COLOR_PAIR(2));
-
-  free(buffer_lines);
+  RenderLines *render_lines = get_render_lines(p->buffer, 3, box_height(p->box));
+  render_lines_draw(render_lines, p->box);
+  free_render_lines(render_lines);
 }
 
 void set_pager_box(Pager *p, int left, int top, int width, int height) {
