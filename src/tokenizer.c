@@ -265,7 +265,7 @@ Token *read_escape_sequence_token(Tokenizer *tr) {
 
   free_esc_seq(es);
 
-  return new_termstyle_token(NULL, val);
+  return new_termstyle_token(val, tr->ts);
 }
 
 Token *tokenizer_read(Tokenizer *tr) {

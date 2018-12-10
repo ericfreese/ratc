@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "buffer.h"
+#include "highlights.h"
 
 typedef struct line_ends LineEnds;
 struct line_ends {
@@ -42,6 +43,7 @@ struct buffer {
 
   LineEnds *line_ends;
   Annotations *annotations;
+  Highlights *highlights;
 };
 
 Buffer *new_buffer() {
@@ -51,11 +53,13 @@ Buffer *new_buffer() {
   b->stream = open_memstream(&b->stream_str, &b->stream_len);
   b->line_ends = new_line_ends();
   b->annotations = new_annotations();
+  b->highlights = new_highlights();
 
   return b;
 }
 
 void free_buffer(Buffer *b) {
+  free_highlights(b->highlights);
   free_annotations(b->annotations);
   fclose(b->stream);
   free(b->stream_str);
@@ -75,7 +79,7 @@ void buffer_handle_token(Buffer *b, Token *t) {
     fflush(b->stream);
     break;
   case TK_TERMSTYLE:
-    // TODO
+    highlights_start(b->highlights, token_termstyle(t), b->stream_len);
     break;
   case TK_NONE:
     break;

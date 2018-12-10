@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "color_pair.h"
 #include "esc_seq.h"
 #include "term_style.h"
 
@@ -56,10 +57,26 @@ void sgr_codes_add(SgrCodes *sgr, uint16_t code) {
 TermStyle *new_term_style() {
   TermStyle *ts = malloc(sizeof *ts);
 
-  ts->fg = 0;
-  ts->bg = 0;
+  ts->fg = ts->bg = -1;
 
   return ts;
+}
+
+TermStyle *term_style_dup(TermStyle *ts) {
+  TermStyle *dup = malloc(sizeof *ts);
+
+  dup->fg = ts->fg;
+  dup->bg = ts->bg;
+
+  return dup;
+}
+
+int term_style_is_default(TermStyle *ts) {
+  return ts->fg == -1 && ts->bg == -1;
+}
+
+attr_t term_style_to_attr(TermStyle *ts) {
+  return COLOR_PAIR(color_pair_get(ts->fg, ts->bg));
 }
 
 void term_style_apply(TermStyle *ts, EscSeq *es) {
@@ -73,8 +90,8 @@ void term_style_apply(TermStyle *ts, EscSeq *es) {
     return;
   }
 
-  tsattr_t new_fg = ts->fg;
-  tsattr_t new_bg = ts->bg;
+  NCURSES_COLOR_T new_fg = ts->fg;
+  NCURSES_COLOR_T new_bg = ts->bg;
 
   SgrCodes *sgr = new_sgr_codes();
 
@@ -93,15 +110,13 @@ void term_style_apply(TermStyle *ts, EscSeq *es) {
   }
 
   if (sgr->len == 0) {
-    new_fg = COLOR_WHITE;
-    new_bg = COLOR_BLACK;
+    new_fg = new_bg = -1;
   }
 
   for (SgrCode *sc = sgr->first; sc != NULL; sc = sc->next) {
     // TODO: Support the rest
     if (sc->code == 0) {
-      new_fg = COLOR_WHITE;
-      new_bg = COLOR_BLACK;
+      new_fg = new_bg = -1;
     } else if (sc->code >= 30 && sc->code <= 37) {
       new_fg = sc->code - 30;
     } else if (sc->code >= 40 && sc->code <= 47) {

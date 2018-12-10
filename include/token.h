@@ -12,7 +12,8 @@ typedef enum {
 typedef struct token Token;
 Token *new_content_token(const char *value);
 Token *new_newline_token(const char *value);
-Token *new_termstyle_token(TermStyle *ts, const char *value);
+Token *new_termstyle_token(const char *value, TermStyle *ts);
 void free_token(Token *t);
 TokenType token_type(Token *t);
 const char* token_value(Token *t);
+TermStyle *token_termstyle(Token *t);

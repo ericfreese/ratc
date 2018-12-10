@@ -5,13 +5,14 @@
 
 #include "esc_seq.h"
 
-typedef uint16_t tsattr_t;
-
 typedef struct term_style TermStyle;
 struct term_style {
-  tsattr_t fg;
-  tsattr_t bg;
+  NCURSES_COLOR_T fg;
+  NCURSES_COLOR_T bg;
 };
 
 TermStyle *new_term_style();
+TermStyle *term_style_dup(TermStyle *ts);
+int term_style_is_default(TermStyle *ts);
+attr_t term_style_to_attr(TermStyle *ts);
 void term_style_apply(TermStyle *ts, EscSeq *es);

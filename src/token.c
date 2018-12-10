@@ -27,12 +27,12 @@ Token *new_newline_token(const char *value) {
   return t;
 }
 
-Token *new_termstyle_token(TermStyle *ts, const char *value) {
+Token *new_termstyle_token(const char *value, TermStyle *ts) {
   Token *t = malloc(sizeof *t);
 
   t->type = TK_TERMSTYLE;
-  t->ts = ts;
   t->value = value;
+  t->ts = term_style_dup(ts);
 
   return t;
 }
@@ -40,6 +40,10 @@ Token *new_termstyle_token(TermStyle *ts, const char *value) {
 void free_token(Token *t) {
   if (t->type == TK_CONTENT || t->type == TK_TERMSTYLE) {
     free((char*)t->value);
+  }
+
+  if (t->type == TK_TERMSTYLE) {
+    free(t->ts);
   }
 
   free(t);
@@ -53,3 +57,6 @@ const char* token_value(Token *t) {
   return t->value;
 }
 
+TermStyle *token_termstyle(Token *t) {
+  return t->ts;
+}

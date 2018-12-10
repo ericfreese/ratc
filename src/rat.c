@@ -44,6 +44,7 @@ void rat_init() {
   cbreak();
   noecho();
   start_color();
+  use_default_colors();
 
   handlers = new_event_handlers();
   input_buffer = new_key_seq();
