@@ -81,8 +81,6 @@ void buffer_handle_token(Buffer *b, Token *t) {
   case TK_TERMSTYLE:
     highlights_start(b->highlights, token_termstyle(t), b->stream_len);
     break;
-  case TK_NONE:
-    break;
   }
 }
 

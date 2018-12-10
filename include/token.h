@@ -3,8 +3,7 @@
 #include "term_style.h"
 
 typedef enum {
-  TK_NONE = 0,
-  TK_CONTENT,
+  TK_CONTENT = 1,
   TK_NEWLINE,
   TK_TERMSTYLE,
 } TokenType;
