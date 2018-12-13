@@ -113,9 +113,13 @@ void highlights_start(Highlights *hs, TermStyle *ts, size_t offset) {
 // - Red black tree? http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx
 // - Splay tree?
 // - Skip list w/ finger search? http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_skip.aspx
-Highlight *highlight_at_point(Highlights *hs, size_t point) {
-  for (Highlight *cursor = hs->first; cursor != NULL && cursor->start <= point; cursor = cursor->next) {
-    if (point >= cursor->start && point < cursor->end) {
+Highlight *highlight_for_region(Highlights *hs, size_t start, size_t end) {
+  for (Highlight *cursor = hs->first; cursor != NULL; cursor = cursor->next) {
+    if (cursor->start >= end) {
+      break;
+    }
+
+    if (cursor->start < end && cursor->end > start) {
       return cursor;
     }
   }
@@ -187,31 +191,54 @@ RenderLines *get_render_lines(Buffer *b, size_t start, size_t num) {
     start_offset = 0;
   }
 
-  size_t line_len;
+  size_t span_end;
+  size_t span_len;
+  attr_t span_attr;
 
-  size_t n = 0;
   size_t *next_offset = &b->line_ends->offsets[start];
-  //Highlight *highlight = highlight_at_point(b->highlights, start_offset);
+  Highlight *highlight = highlight_for_region(b->highlights, start_offset, *next_offset);
 
   char *content;
 
-  while (n < num) {
+  for (size_t n = 0; n < num; n++) {
     RenderLine *rl = new_render_line();
 
-    line_len = *next_offset - start_offset;
+    while (start_offset < *next_offset) {
+      if (highlight != NULL && highlight->start <= start_offset) {
+        if (*next_offset > highlight->end) {
+          span_end = highlight->end;
+        } else {
+          span_end = *next_offset;
+        }
 
-    content = malloc(line_len + 1);
-    memcpy(content, b->stream_str + start_offset, line_len);
-    content[line_len] = '\0';
+        span_attr = term_style_to_attr(highlight->ts);
+      } else {
+        if (highlight != NULL && *next_offset > highlight->start) {
+          span_end = highlight->start;
+        } else {
+          span_end = *next_offset;
+        }
 
-    render_line_add(rl, A_BOLD, content);
-    free(content);
+        span_attr = A_NORMAL;
+      }
 
-    start_offset = *next_offset;
+      span_len = span_end - start_offset;
+
+      content = malloc(span_len + 1);
+      memcpy(content, b->stream_str + start_offset, span_len);
+      content[span_len] = '\0';
+      render_line_add(rl, span_attr, content);
+      free(content);
+
+      start_offset += span_len;
+
+      while (highlight != NULL && highlight->end <= start_offset) {
+        highlight = highlight->next;
+      }
+    }
 
     render_lines_add(rls, rl);
 
-    n++;
     next_offset++;
   }
 

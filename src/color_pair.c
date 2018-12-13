@@ -2,13 +2,16 @@
 
 #include "term_style.h"
 
-short num_pairs = 0;
+int pairs[64];
 
 // TODO: Implement as hash map
 int color_pair_get(NCURSES_COLOR_T fg, NCURSES_COLOR_T bg) {
-  num_pairs++;
+  short pair = 8 * (fg % 8) + (bg % 8);
 
-  init_pair(num_pairs, fg, bg);
+  if (!pairs[pair]) {
+    init_pair(pair, fg, bg);
+    pairs[pair] = 1;
+  }
 
-  return num_pairs;
+  return pair;
 }
