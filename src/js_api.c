@@ -148,6 +148,17 @@ duk_ret_t js_pager_add_annotator(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_pager_reload(duk_context *duk_ctx) {
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_reload(p);
+
+  return 0;
+}
+
 /* Adds a `Pager` constructor to an object on the top of the stack */
 void js_pager_setup(duk_context *duk_ctx) {
   duk_push_c_function(duk_ctx, js_new_pager, 1);
@@ -156,6 +167,9 @@ void js_pager_setup(duk_context *duk_ctx) {
 
   duk_push_c_function(duk_ctx, js_pager_add_annotator, 1);
   duk_put_prop_string(duk_ctx, -2, "addAnnotator");
+
+  duk_push_c_function(duk_ctx, js_pager_reload, 1);
+  duk_put_prop_string(duk_ctx, -2, "reload");
 
   duk_put_prop_string(duk_ctx, -2, "prototype");
 

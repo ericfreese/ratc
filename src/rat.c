@@ -78,6 +78,10 @@ void rat_init() {
       "Rat.getActivePager().addAnnotator(new Rat.Annotator('./test-annotator foo | tee >(xxd >> debug.log)', 'bar'));"
     "});"
 
+    "Rat.addEventListener(['^R'], function() {"
+      "Rat.getActivePager().reload();"
+    "});"
+
     "Rat.addEventListener(['q'], function() {"
       "Rat.pop();"
     "});"

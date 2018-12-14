@@ -67,6 +67,7 @@ Pager *new_pager(char *cmd) {
   p->box = new_box(3, 3, 100, 20);
   p->refs = (struct refs){free_pager, 1};
   p->annotators = NULL;
+  p->buffer = NULL;
 
   run_pager_command(p);
 
@@ -82,6 +83,10 @@ void pager_ref_dec(Pager *p) {
 }
 
 void run_pager_command(Pager *p) {
+  if(p->buffer) {
+    free_buffer(p->buffer);
+  }
+
   p->buffer = new_buffer();
 
   io_start_buffer(p->buffer, p->cmd);
