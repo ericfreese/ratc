@@ -132,8 +132,12 @@ void pager_reload(Pager *p) {
   run_pager_command(p);
 }
 
-void pager_scroll(Pager *p, size_t delta) {
-  p->scroll += delta;
+void pager_scroll(Pager *p, ssize_t delta) {
+  if (delta < 0 && abs(delta) > p->scroll) {
+    p->scroll = 0;
+  } else {
+    p->scroll += delta;
+  }
 }
 
 //Widget *new_pager_widget(Pager *p) {
