@@ -56,6 +56,10 @@ void rat_init() {
   io_init(handle_input);
 
   duk_eval_string_noresult(duk_ctx,
+    "var logger = new Rat.Pager('git llll');"
+    "logger.addAnnotator(new Rat.Annotator('./test-annotator pager | tee >(xxd >> debug.log)', 'bar'));"
+    "Rat.push(logger);"
+
     "Rat.addEventListener(['p'], function() {"
       "var p = new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done');"
       "p.addAnnotator(new Rat.Annotator('./test-annotator foo | tee >(xxd >> debug.log)', 'bar'));"
@@ -128,7 +132,7 @@ void render() {
 }
 
 void rat_run() {
-  while (!done) {
+  while (!done && pager_stack_len(pagers) > 0) {
     render();
     io_tick();
   }
