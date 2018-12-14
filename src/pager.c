@@ -31,8 +31,8 @@ void free_annotator_list_item(AnnotatorListItem *ali) {
 struct pager {
   char *cmd;
   Buffer *buffer;
-  int scroll;
-  int cursor;
+  size_t scroll;
+  size_t cursor;
   Box *box;
   AnnotatorListItem *annotators;
 
@@ -68,6 +68,7 @@ Pager *new_pager(char *cmd) {
   p->refs = (struct refs){free_pager, 1};
   p->annotators = NULL;
   p->buffer = NULL;
+  p->scroll = p->cursor = 0;
 
   run_pager_command(p);
 
@@ -105,7 +106,7 @@ Buffer *get_buffer(Pager *p) {
 }
 
 void render_pager(Pager *p) {
-  RenderLines *render_lines = get_render_lines(p->buffer, 3, box_height(p->box));
+  RenderLines *render_lines = get_render_lines(p->buffer, p->scroll, box_height(p->box));
   render_lines_draw(render_lines, p->box);
   free_render_lines(render_lines);
 }
@@ -129,6 +130,10 @@ void pager_add_annotator(Pager *p, Annotator *ar) {
 void pager_reload(Pager *p) {
   cancel_pager_command(p);
   run_pager_command(p);
+}
+
+void pager_scroll(Pager *p, size_t delta) {
+  p->scroll += delta;
 }
 
 //Widget *new_pager_widget(Pager *p) {

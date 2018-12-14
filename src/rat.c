@@ -82,6 +82,14 @@ void rat_init() {
       "Rat.getActivePager().reload();"
     "});"
 
+    "Rat.addEventListener(['j'], function() {"
+      "Rat.getActivePager().scroll(1);"
+    "});"
+
+    "Rat.addEventListener(['k'], function() {"
+      "Rat.getActivePager().scroll(-1);"
+    "});"
+
     "Rat.addEventListener(['q'], function() {"
       "Rat.pop();"
     "});"

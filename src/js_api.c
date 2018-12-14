@@ -159,6 +159,21 @@ duk_ret_t js_pager_reload(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_pager_scroll(duk_context *duk_ctx) {
+  if (!duk_is_number(duk_ctx, 0)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an number");
+  }
+
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_scroll(p, duk_get_int(duk_ctx, 0));
+
+  return 0;
+}
+
 /* Adds a `Pager` constructor to an object on the top of the stack */
 void js_pager_setup(duk_context *duk_ctx) {
   duk_push_c_function(duk_ctx, js_new_pager, 1);
@@ -170,6 +185,9 @@ void js_pager_setup(duk_context *duk_ctx) {
 
   duk_push_c_function(duk_ctx, js_pager_reload, 1);
   duk_put_prop_string(duk_ctx, -2, "reload");
+
+  duk_push_c_function(duk_ctx, js_pager_scroll, 1);
+  duk_put_prop_string(duk_ctx, -2, "scroll");
 
   duk_put_prop_string(duk_ctx, -2, "prototype");
 
