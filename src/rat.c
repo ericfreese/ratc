@@ -74,6 +74,10 @@ void rat_init() {
       "Rat.push(p);"
     "});"
 
+    "Rat.addEventListener(['a'], function() {"
+      "Rat.getActivePager().addAnnotator(new Rat.Annotator('./test-annotator foo | tee >(xxd >> debug.log)', 'bar'));"
+    "});"
+
     "Rat.addEventListener(['q'], function() {"
       "Rat.pop();"
     "});"
@@ -95,6 +99,10 @@ void rat_push_pager(Pager *p) {
 
 void rat_pop_pager() {
   pager_stack_pop(pagers);
+}
+
+Pager *rat_active_pager() {
+  return pager_stack_top(pagers);
 }
 
 void rat_add_event_listener(KeySeq *trigger, JSEventHandler *jeh) {

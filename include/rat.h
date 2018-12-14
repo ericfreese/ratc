@@ -9,4 +9,5 @@ void rat_run();
 void rat_cleanup();
 void rat_push_pager(Pager *p);
 void rat_pop_pager();
+Pager *rat_active_pager();
 void rat_add_event_listener(KeySeq *trigger, JSEventHandler *jeh);

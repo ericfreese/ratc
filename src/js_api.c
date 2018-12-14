@@ -10,6 +10,14 @@ struct js_event_handler {
   duk_context *ctx;
 };
 
+char *js_get_stash_key(void *p) {
+  int len = snprintf(NULL, 0, "%p", p);
+  char *key = malloc(len + 1);
+  sprintf(key, "%p", p);
+
+  return key;
+}
+
 JSEventHandler *new_js_event_handler(duk_context *duk_ctx, char *stash_key) {
   JSEventHandler *jeh = malloc(sizeof *jeh);
 
@@ -44,14 +52,13 @@ duk_ret_t js_add_event_listener(duk_context *duk_ctx) {
     return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an array");
   }
 
-  if (!duk_is_function(duk_ctx, 1)) {
-    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "second arg must be a function");
-  }
-
   duk_size_t len = duk_get_length(duk_ctx, 0);
-
   if (len <= 0) {
     return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "array must not be empty");
+  }
+
+  if (!duk_is_function(duk_ctx, 1)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "second arg must be a function");
   }
 
   KeySeq *ks = new_key_seq();
@@ -69,7 +76,7 @@ duk_ret_t js_add_event_listener(duk_context *duk_ctx) {
     duk_pop(duk_ctx);
   }
 
-  JSEventHandler *jeh = new_js_event_handler(duk_ctx, key_seq_str(ks));
+  JSEventHandler *jeh = new_js_event_handler(duk_ctx, js_get_stash_key(ks));
 
   /* Save a reference to the handler function in the stash */
   duk_push_heap_stash(duk_ctx);
@@ -105,6 +112,7 @@ duk_ret_t js_new_pager(duk_context *duk_ctx) {
   }
 
   Pager *p = new_pager((char*)duk_get_string(duk_ctx, 0));
+  char *stash_key = js_get_stash_key(p);
 
   fprintf(stderr, "created pager: %p\n", p);
 
@@ -116,6 +124,13 @@ duk_ret_t js_new_pager(duk_context *duk_ctx) {
   duk_push_pointer(duk_ctx, p);
   duk_put_prop_string(duk_ctx, -2, DUK_HIDDEN_SYMBOL("__pager__"));
 
+  /* Save a reference to the pager in the stash */
+  duk_push_heap_stash(duk_ctx);
+  duk_dup(duk_ctx, -2);
+  duk_put_prop_string(duk_ctx, -2, stash_key); // stash->{key} = this
+  duk_pop(duk_ctx);
+
+  free(stash_key);
   return 0;
 }
 
@@ -198,9 +213,29 @@ duk_ret_t js_rat_push(duk_context *duk_ctx) {
 }
 
 duk_ret_t js_rat_pop(duk_context *duk_ctx) {
+  Pager *p = rat_active_pager();
+  char *stash_key = js_get_stash_key(p);
+
+  duk_push_heap_stash(duk_ctx);
+  duk_del_prop_string(duk_ctx, -1, stash_key);
+  duk_pop(duk_ctx);
+
   rat_pop_pager();
 
+  free(stash_key);
   return 0;
+}
+
+duk_ret_t js_get_active_pager(duk_context *duk_ctx) {
+  Pager *active = rat_active_pager();
+
+  char *stash_key = js_get_stash_key(active);
+
+  duk_push_heap_stash(duk_ctx);
+  duk_get_prop_string(duk_ctx, -1, stash_key);
+
+  free(stash_key);
+  return 1;
 }
 
 void js_rat_setup(duk_context *duk_ctx) {
@@ -220,6 +255,9 @@ void js_rat_setup(duk_context *duk_ctx) {
 
   duk_push_c_function(duk_ctx, js_rat_push, 1);
   duk_put_prop_string(duk_ctx, -2, "push");
+
+  duk_push_c_function(duk_ctx, js_get_active_pager, 0);
+  duk_put_prop_string(duk_ctx, -2, "getActivePager");
 
   duk_put_global_string(duk_ctx, "Rat");
 }

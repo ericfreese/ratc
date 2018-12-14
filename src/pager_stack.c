@@ -88,6 +88,10 @@ void pager_stack_pop(PagerStack *ps) {
   pager_stack_print(ps, "after pop");
 }
 
+Pager *pager_stack_top(PagerStack *ps) {
+  return ps->last->pager;
+}
+
 size_t pager_stack_len(PagerStack *ps) {
   return ps->len;
 }
