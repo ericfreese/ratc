@@ -27,18 +27,17 @@ Token *new_newline_token(const char *value) {
   return t;
 }
 
-Token *new_termstyle_token(const char *value, TermStyle *ts) {
+Token *new_termstyle_token(TermStyle *ts) {
   Token *t = malloc(sizeof *t);
 
   t->type = TK_TERMSTYLE;
-  t->value = value;
   t->ts = term_style_dup(ts);
 
   return t;
 }
 
 void free_token(Token *t) {
-  if (t->type == TK_CONTENT || t->type == TK_TERMSTYLE) {
+  if (t->type == TK_CONTENT) {
     free((char*)t->value);
   }
 

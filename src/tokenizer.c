@@ -245,11 +245,6 @@ abort:
 
 Token *read_escape_sequence_token(Tokenizer *tr) {
   EscSeq *es = read_esc_seq(tr);
-  //TermStyle *ts;
-
-  char *val;
-  size_t len;
-  FILE *stream = open_memstream(&val, &len);
 
   if (es == NULL) {
     return NULL;
@@ -257,15 +252,9 @@ Token *read_escape_sequence_token(Tokenizer *tr) {
 
   term_style_apply(tr->ts, es);
 
-  for (EscSeqPart *cursor = es->first; cursor != NULL; cursor = cursor->next) {
-    fwrite(cursor->value, 1, strlen(cursor->value), stream);
-  }
-
-  fclose(stream);
-
   free_esc_seq(es);
 
-  return new_termstyle_token(val, tr->ts);
+  return new_termstyle_token(tr->ts);
 }
 
 Token *tokenizer_read(Tokenizer *tr) {
