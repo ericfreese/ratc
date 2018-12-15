@@ -185,7 +185,7 @@ RenderLines *get_render_lines(Buffer *b, size_t start, size_t num) {
   RenderLines *rls = new_render_lines();
 
   size_t start_offset;
-  if (start > 1) {
+  if (start > 0) {
     start_offset = b->line_ends->offsets[start - 1];
   } else {
     start_offset = 0;
