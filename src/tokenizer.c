@@ -51,6 +51,7 @@ Token *read_content_token(Tokenizer *tr) {
   char *val;
   size_t len;
   FILE *stream = open_memstream(&val, &len);
+  Token *t;
 
   while (1) {
     n = read_queue_read(tr->rq, &ch, 1);
@@ -74,7 +75,9 @@ Token *read_content_token(Tokenizer *tr) {
 
   fclose(stream);
 
-  return new_content_token(val);
+  t = new_content_token(val);
+  free(val);
+  return t;
 }
 
 EscSeqPart *read_esc_seq_cs_priv_param(Tokenizer *tr) {

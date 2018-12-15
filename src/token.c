@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "term_style.h"
 #include "token.h"
@@ -13,7 +14,7 @@ Token *new_content_token(const char *value) {
   Token *t = malloc(sizeof *t);
 
   t->type = TK_CONTENT;
-  t->value = value;
+  t->value = strdup(value);
 
   return t;
 }
