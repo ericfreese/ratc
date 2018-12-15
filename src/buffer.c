@@ -176,13 +176,13 @@ void buffer_handle_token(Buffer *b, Token *t) {
 }
 
 RenderLines *get_render_lines(Buffer *b, size_t start, size_t num) {
+  RenderLines *rls = new_render_lines();
+
   if (start >= b->line_ends->len) {
-    num = 0;
+    return rls;
   } else if (start + num > b->line_ends->len) {
     num = b->line_ends->len - start;
   }
-
-  RenderLines *rls = new_render_lines();
 
   size_t start_offset;
   if (start > 0) {
@@ -196,7 +196,7 @@ RenderLines *get_render_lines(Buffer *b, size_t start, size_t num) {
   attr_t span_attr;
 
   size_t *next_offset = &b->line_ends->offsets[start];
-  Highlight *highlight = highlight_for_region(b->highlights, start_offset, *next_offset);
+  Highlight *highlight = highlight_for_region(b->highlights, start_offset, *(next_offset + num - 1));
 
   char *content;
 
