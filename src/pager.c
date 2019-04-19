@@ -57,6 +57,7 @@ void free_pager(const struct refs *r) {
 
   free_box(p->box);
 
+  free(p->cmd);
   free(p);
 }
 
