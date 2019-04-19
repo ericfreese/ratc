@@ -10,6 +10,65 @@ struct js_event_handler {
   duk_context *ctx;
 };
 
+/* Duktape uses a CESU-8 encoding, which allows UTF-16 surrogate pairs
+   (themselves encoded in UTF-8), in order to be kinda-sorta compatible with
+   ecmascript's UTF-16 requirements. This function just copies the cesu8
+   string, converting any surrogate pairs it finds to UTF-8. */
+static char *cesu8_to_utf8(const char *cesu8)
+{
+  char *utf8 = calloc(1, strlen(cesu8) + 1);
+  const unsigned char *cc = (void *)cesu8;
+  char *cu = utf8;
+  uint32_t hs = 0;
+
+  while (*cc != '\0') {
+    uint32_t c = 0;
+    uint32_t u;
+
+    if (cc[0] <= 0x7F) {
+      *cu++ = *cc++;
+      continue;
+    } else if (cc[0] <= 0xDF) {
+      *cu++ = *cc++;
+      *cu++ = *cc++;
+      continue;
+    } else if (cc[0] <= 0xEF) {
+      /* Surrogates are encoded in 3 chars so convert
+         back to a single UTF-16 value */
+      c = ((uint32_t)cc[0] & 0xF) << 12 |
+          ((uint32_t)cc[1] & 0x3F) << 6 |
+          ((uint32_t)cc[2] & 0x3F);
+    } else {
+      *cu++ = *cc++;
+      *cu++ = *cc++;
+      *cu++ = *cc++;
+      *cu++ = *cc++;
+      continue;
+    }
+    if (hs == 0 && c >= 0xD800 && c <= 0xDBFF)
+      hs = c;
+    else if (hs != 0 && c >= 0xDC00 && c <= 0xDFFF) {
+      /* Have high and low surrogates - convert to code point then
+         back to UTF-8 */
+      u = 0x10000 + ((((uint32_t)hs & 0x3FF) << 10) | (c & 0x3FF));
+      *cu++ = 0xF0 |  u >> 18;
+      *cu++ = 0x80 | (u >> 12 & 0x3F);
+      *cu++ = 0x80 | (u >> 6 & 0x3F);
+      *cu++ = 0x80 | (u & 0x3F);
+      hs = 0;
+    } else {
+      *cu++ = cc[0];
+      *cu++ = cc[1];
+      *cu++ = cc[2];
+      hs = 0;
+    }
+    cc += 3;
+  }
+
+  *cu = '\0';
+  return utf8;
+}
+
 char *js_get_stash_key(void *p) {
   int len = snprintf(NULL, 0, "%p", p);
   char *key = malloc(len + 1);
@@ -71,7 +130,9 @@ duk_ret_t js_add_event_listener(duk_context *duk_ctx) {
       return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "array must contain only strings");
     }
 
-    key_seq_add(ks, (char*)duk_get_string(duk_ctx, -1));
+    char *keys = cesu8_to_utf8(duk_get_string(duk_ctx, -1));
+    key_seq_add(ks, keys);
+    free((char*)keys);
 
     duk_pop(duk_ctx);
   }
@@ -90,9 +151,9 @@ duk_ret_t js_add_event_listener(duk_context *duk_ctx) {
 }
 
 duk_ret_t rat_print(duk_context *duk_ctx) {
-  const char *message = duk_get_string(duk_ctx, 0);
-
-  fprintf(stderr, "print: '%s'\n", message);
+  const char *utf8_message = cesu8_to_utf8(duk_get_string(duk_ctx, 0));
+  fprintf(stderr, "Rat.print: '%s'\n", utf8_message);
+  free((char*)utf8_message);
 
   return 0;
 }
@@ -111,7 +172,7 @@ duk_ret_t js_new_pager(duk_context *duk_ctx) {
     return 0;
   }
 
-  Pager *p = new_pager((char*)duk_get_string(duk_ctx, 0));
+  Pager *p = new_pager(cesu8_to_utf8(duk_get_string(duk_ctx, 0)));
   char *stash_key = js_get_stash_key(p);
 
   fprintf(stderr, "created pager: %p\n", p);
@@ -208,7 +269,13 @@ duk_ret_t js_new_annotator(duk_context *duk_ctx) {
     return 0;
   }
 
-  Annotator *ar = new_annotator((char*)duk_get_string(duk_ctx, 0), (char*)duk_get_string(duk_ctx, 1));
+  char *cmd = cesu8_to_utf8(duk_get_string(duk_ctx, 0));
+  char *annotation_type = cesu8_to_utf8(duk_get_string(duk_ctx, 1));
+
+  Annotator *ar = new_annotator(cmd, annotation_type);
+
+  free((char*)cmd);
+  free((char*)annotation_type);
 
   fprintf(stderr, "created annotator: %p\n", ar);
 
