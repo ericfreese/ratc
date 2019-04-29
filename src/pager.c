@@ -55,7 +55,9 @@ void free_pager(const struct refs *r) {
     free_buffer(p->buffer);
   }
 
-  free_box(p->box);
+  if(p->box) {
+    free_box(p->box);
+  }
 
   free(p->cmd);
   free(p);
@@ -65,7 +67,7 @@ Pager *new_pager(char *cmd) {
   Pager *p = (Pager*)malloc(sizeof(*p));
 
   p->cmd = cmd;
-  p->box = new_box(3, 3, 100, 20);
+  p->box = NULL;
   p->refs = (struct refs){free_pager, 1};
   p->annotators = NULL;
   p->buffer = NULL;
@@ -107,20 +109,24 @@ Buffer *get_buffer(Pager *p) {
 }
 
 void render_pager(Pager *p) {
+  if (!p->box) {
+    return;
+  }
+
   RenderLines *render_lines = get_render_lines(p->buffer, p->scroll, box_height(p->box));
   render_lines_draw(render_lines, p->box);
   free_render_lines(render_lines);
 }
 
 void set_pager_box(Pager *p, int left, int top, int width, int height) {
-  box_set_left(p->box, left);
-  box_set_top(p->box, top);
-  box_set_width(p->box, width);
-  box_set_height(p->box, height);
-}
-
-Box *get_pager_box(Pager *p) {
-  return p->box;
+  if (p->box) {
+    box_set_left(p->box, left);
+    box_set_top(p->box, top);
+    box_set_width(p->box, width);
+    box_set_height(p->box, height);
+  } else {
+    p->box = new_box(left, top, width, height);
+  }
 }
 
 void pager_add_annotator(Pager *p, Annotator *ar) {
@@ -140,7 +146,3 @@ void pager_scroll(Pager *p, ssize_t delta) {
     p->scroll += delta;
   }
 }
-
-//Widget *new_pager_widget(Pager *p) {
-//  return new_widget(p, render_pager, set_pager_box, get_pager_box);
-//}

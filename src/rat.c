@@ -21,8 +21,16 @@ static void duk_fatal_handler(void *udata, const char *msg) {
   abort();
 }
 
+void render() {
+  erase();
+  render_pager_stack(pagers);
+  refresh();
+}
+
 void handle_input(int ch) {
   switch (ch) {
+    case KEY_RESIZE:
+      return;
     case 'Q':
       done = 1;
       break;
@@ -38,6 +46,28 @@ void handle_input(int ch) {
   }
 }
 
+void handle_winch(int sig) {
+  endwin();
+  refresh();
+
+  set_pager_stack_box(pagers, 0, 0, COLS, LINES);
+
+  render();
+}
+
+void install_winch_handler() {
+  struct sigaction sa;
+
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = handle_winch;
+
+  if (sigaction(SIGWINCH, &sa, NULL) == -1) {
+    perror("sigaction");
+    exit(EXIT_FAILURE);
+  }
+}
+
 void rat_init() {
   setlocale(LC_ALL, "");
   initscr();
@@ -46,9 +76,11 @@ void rat_init() {
   start_color();
   use_default_colors();
 
+  install_winch_handler();
+
   handlers = new_event_handlers();
   input_buffer = new_key_seq();
-  pagers = new_pager_stack();
+  pagers = new_pager_stack(new_box(0, 0, COLS, LINES));
 
   duk_ctx = duk_create_heap(NULL, NULL, NULL, NULL, duk_fatal_handler);
   js_rat_setup(duk_ctx);
@@ -123,12 +155,6 @@ Pager *rat_active_pager() {
 
 void rat_add_event_listener(KeySeq *trigger, JSEventHandler *jeh) {
   event_handlers_add(handlers, trigger, jeh);
-}
-
-void render() {
-  erase();
-  render_pager_stack(pagers);
-  refresh();
 }
 
 void rat_run() {
