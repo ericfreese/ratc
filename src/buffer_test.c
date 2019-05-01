@@ -4,22 +4,31 @@
 #include "minunit.h"
 #include "buffer.h"
 
-MU_TEST(test_new) {
-  Buffer *b = new_buffer();
+Buffer *b;
+TermStyle *ts;
+RenderLines *rls;
+RenderLine *rl;
 
-  buffer_handle_token(b, new_content_token("foo bar"));
+MU_TEST(num_lines_returns_number_of_lines) {
+  b = new_buffer();
 
-  mu_check(buffer_len(b) == 7);
-  mu_check(strcmp(buffer_content(b, 0), "foo bar") == 0);
-}
+  buffer_handle_token(b, new_content_token("one"));
+  buffer_handle_token(b, new_newline_token("\n"));
+  buffer_handle_token(b, new_content_token("two"));
+  buffer_handle_token(b, new_newline_token("\n"));
+  buffer_handle_token(b, new_content_token("three"));
+  buffer_handle_token(b, new_newline_token("\n"));
 
-MU_TEST_SUITE(test_suite) {
-  MU_RUN_TEST(test_new);
+  mu_check(buffer_num_lines(b) == 4);
+
+  free_buffer(b);
 }
 
 int main(int argc, char *argv[]) {
-  MU_RUN_SUITE(test_suite);
+  MU_RUN_TEST(num_lines_returns_number_of_lines);
+
   MU_REPORT();
+
   return minunit_status;
 }
 

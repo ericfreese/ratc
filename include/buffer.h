@@ -26,5 +26,6 @@ RenderLines *get_render_lines(Buffer *b, size_t start, size_t num);
 //void buffer_list_annotations(Buffer *b);
 void buffer_add_annotation(Buffer *b, Annotation *a);
 size_t buffer_len(Buffer *b);
+size_t buffer_num_lines(Buffer *b);
 const char* buffer_content(Buffer *b, size_t offset);
 int buffer_is_running(Buffer *b);

@@ -260,6 +260,10 @@ size_t buffer_len(Buffer *b) {
   return b->stream_len;
 }
 
+size_t buffer_num_lines(Buffer *b) {
+  return b->line_ends->len + 1;
+}
+
 const char* buffer_content(Buffer *b, size_t offset) {
   if (offset > b->stream_len) {
     return NULL;
