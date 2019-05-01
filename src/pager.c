@@ -45,9 +45,9 @@ void free_pager(const struct refs *r) {
   fprintf(stderr, "FREEING PAGER %p\n", p);
 
   AnnotatorListItem *next;
-  for (AnnotatorListItem *cursor = p->annotators; cursor != NULL; cursor = next) {
-    next = cursor->next;
-    free_annotator_list_item(cursor);
+  for (AnnotatorListItem *ali = p->annotators; ali != NULL; ali = next) {
+    next = ali->next;
+    free_annotator_list_item(ali);
   }
 
   // TODO: Can we remove this check? We should always have a buffer right?
@@ -95,8 +95,8 @@ void run_pager_command(Pager *p) {
 
   io_start_buffer(p->buffer, p->cmd);
 
-  for (AnnotatorListItem *cursor = p->annotators; cursor != NULL; cursor = cursor->next) {
-    io_start_annotating_buffer(p->buffer, cursor->annotator);
+  for (AnnotatorListItem *ali = p->annotators; ali != NULL; ali = ali->next) {
+    io_start_annotating_buffer(p->buffer, ali->annotator);
   }
 }
 
