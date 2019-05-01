@@ -113,9 +113,14 @@ void render_pager(Pager *p) {
     return;
   }
 
-  RenderLines *render_lines = get_render_lines(p->buffer, p->scroll, box_height(p->box));
-  render_lines_draw(render_lines, p->box);
+  move(box_top(p->box) + p->cursor - p->scroll, box_left(p->box) + 1);
+  addstr("▶");
+
+  Box *line_box = new_box(box_left(p->box) + 3, box_top(p->box), box_width(p->box), box_height(p->box));
+  RenderLines *render_lines = get_render_lines(p->buffer, p->scroll, box_height(line_box));
+  render_lines_draw(render_lines, line_box);
   free_render_lines(render_lines);
+  free_box(line_box);
 }
 
 void set_pager_box(Pager *p, int left, int top, int width, int height) {
@@ -127,6 +132,8 @@ void set_pager_box(Pager *p, int left, int top, int width, int height) {
   } else {
     p->box = new_box(left, top, width, height);
   }
+
+  pager_scroll_to(p, p->scroll);
 }
 
 void pager_add_annotator(Pager *p, Annotator *ar) {
@@ -139,10 +146,62 @@ void pager_reload(Pager *p) {
   run_pager_command(p);
 }
 
-void pager_scroll(Pager *p, ssize_t delta) {
-  if (delta < 0 && abs(delta) > p->scroll) {
-    p->scroll = 0;
+void pager_move_cursor_to(Pager *p, ssize_t cursor) {
+  if (cursor < 0) {
+    p->cursor = 0;
+  } else if (cursor > buffer_num_lines(p->buffer) - 1) {
+    p->cursor = buffer_num_lines(p->buffer) - 1;
   } else {
-    p->scroll += delta;
+    p->cursor = cursor;
   }
+
+  if (p->cursor < p->scroll) {
+    pager_scroll_to(p, p->cursor);
+  } else if (p->cursor > p->scroll + box_height(p->box) - 1) {
+    pager_scroll_to(p, p->cursor - (box_height(p->box) - 1));
+  }
+}
+
+void pager_move_cursor(Pager *p, ssize_t delta) {
+  pager_move_cursor_to(p, p->cursor + delta);
+}
+
+void pager_scroll_to(Pager *p, ssize_t scroll) {
+  if (scroll < 0) {
+    p->scroll = 0;
+  } else if (scroll > buffer_num_lines(p->buffer) - box_height(p->box)) {
+    if (buffer_num_lines(p->buffer) > box_height(p->box)) {
+      p->scroll = buffer_num_lines(p->buffer) - box_height(p->box);
+    } else {
+      p->scroll = 0;
+    }
+  } else {
+    p->scroll = scroll;
+  }
+
+  if (p->cursor < p->scroll) {
+    pager_move_cursor_to(p, p->scroll);
+  } else if (p->cursor > p->scroll + box_height(p->box) - 1) {
+    pager_move_cursor_to(p, p->scroll + box_height(p->box) - 1);
+  }
+}
+
+void pager_scroll(Pager *p, ssize_t delta) {
+  pager_scroll_to(p, p->scroll + delta);
+}
+
+void pager_page_up(Pager *p) {
+  pager_scroll(p, -box_height(p->box));
+}
+
+void pager_page_down(Pager *p) {
+  pager_scroll(p, box_height(p->box));
+}
+
+void pager_first_line(Pager *p) {
+  pager_move_cursor_to(p, 0);
+}
+
+void pager_last_line(Pager *p) {
+  pager_move_cursor_to(p, buffer_num_lines(p->buffer));
 }

@@ -119,11 +119,35 @@ void rat_init() {
     "});"
 
     "Rat.addEventListener(['j'], function() {"
-      "Rat.getActivePager().scroll(1);"
+      "Rat.getActivePager().moveCursor(1);"
     "});"
 
     "Rat.addEventListener(['k'], function() {"
+      "Rat.getActivePager().moveCursor(-1);"
+    "});"
+
+    "Rat.addEventListener(['^E'], function() {"
+      "Rat.getActivePager().scroll(1);"
+    "});"
+
+    "Rat.addEventListener(['^Y'], function() {"
       "Rat.getActivePager().scroll(-1);"
+    "});"
+
+    "Rat.addEventListener(['^D'], function() {"
+      "Rat.getActivePager().pageDown();"
+    "});"
+
+    "Rat.addEventListener(['^U'], function() {"
+      "Rat.getActivePager().pageUp();"
+    "});"
+
+    "Rat.addEventListener(['g', 'g'], function() {"
+      "Rat.getActivePager().firstLine();"
+    "});"
+
+    "Rat.addEventListener(['G'], function() {"
+      "Rat.getActivePager().lastLine();"
     "});"
 
     "Rat.addEventListener(['q'], function() {"

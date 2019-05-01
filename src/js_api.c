@@ -220,6 +220,21 @@ duk_ret_t js_pager_reload(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_pager_move_cursor(duk_context *duk_ctx) {
+  if (!duk_is_number(duk_ctx, 0)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an number");
+  }
+
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_move_cursor(p, duk_get_int(duk_ctx, 0));
+
+  return 0;
+}
+
 duk_ret_t js_pager_scroll(duk_context *duk_ctx) {
   if (!duk_is_number(duk_ctx, 0)) {
     return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an number");
@@ -231,6 +246,50 @@ duk_ret_t js_pager_scroll(duk_context *duk_ctx) {
   Pager *p = duk_get_pointer(duk_ctx, -1);
 
   pager_scroll(p, duk_get_int(duk_ctx, 0));
+
+  return 0;
+}
+
+duk_ret_t js_pager_page_up(duk_context *duk_ctx) {
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_page_up(p);
+
+  return 0;
+}
+
+duk_ret_t js_pager_page_down(duk_context *duk_ctx) {
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_page_down(p);
+
+  return 0;
+}
+
+duk_ret_t js_pager_first_line(duk_context *duk_ctx) {
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_first_line(p);
+
+  return 0;
+}
+
+duk_ret_t js_pager_last_line(duk_context *duk_ctx) {
+  duk_push_this(duk_ctx);
+
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_last_line(p);
 
   return 0;
 }
@@ -247,8 +306,23 @@ void js_pager_setup(duk_context *duk_ctx) {
   duk_push_c_function(duk_ctx, js_pager_reload, 1);
   duk_put_prop_string(duk_ctx, -2, "reload");
 
+  duk_push_c_function(duk_ctx, js_pager_move_cursor, 1);
+  duk_put_prop_string(duk_ctx, -2, "moveCursor");
+
   duk_push_c_function(duk_ctx, js_pager_scroll, 1);
   duk_put_prop_string(duk_ctx, -2, "scroll");
+
+  duk_push_c_function(duk_ctx, js_pager_page_up, 1);
+  duk_put_prop_string(duk_ctx, -2, "pageUp");
+
+  duk_push_c_function(duk_ctx, js_pager_page_down, 1);
+  duk_put_prop_string(duk_ctx, -2, "pageDown");
+
+  duk_push_c_function(duk_ctx, js_pager_first_line, 1);
+  duk_put_prop_string(duk_ctx, -2, "firstLine");
+
+  duk_push_c_function(duk_ctx, js_pager_last_line, 1);
+  duk_put_prop_string(duk_ctx, -2, "lastLine");
 
   duk_put_prop_string(duk_ctx, -2, "prototype");
 
