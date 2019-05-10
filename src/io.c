@@ -128,7 +128,6 @@ ssize_t buffer_io_read(BufferIO *bio) {
 
     while ((t = tokenizer_read(bio->tokenizer)) != NULL) {
       buffer_handle_token(bio->buffer, t);
-      free_token(t);
     }
   } else {
     bio->rdone = 1;

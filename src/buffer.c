@@ -173,6 +173,8 @@ void buffer_handle_token(Buffer *b, Token *t) {
     highlights_start(b->highlights, token_termstyle(t), b->stream_len);
     break;
   }
+
+  free_token(t);
 }
 
 RenderLines *get_render_lines(Buffer *b, size_t start, size_t num) {
