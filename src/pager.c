@@ -116,7 +116,7 @@ void render_pager(Pager *p) {
   move(box_top(p->box) + p->cursor - p->scroll, box_left(p->box) + 1);
   addstr("▶");
 
-  Box *line_box = new_box(box_left(p->box) + 3, box_top(p->box), box_width(p->box), box_height(p->box));
+  Box *line_box = new_box(box_left(p->box) + 3, box_top(p->box), box_width(p->box) - 3, box_height(p->box));
   RenderLines *render_lines = get_render_lines(p->buffer, p->scroll, box_height(line_box));
   render_lines_draw(render_lines, line_box);
   free_render_lines(render_lines);

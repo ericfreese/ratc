@@ -8,7 +8,7 @@ typedef struct render_line RenderLine;
 RenderLine *new_render_line();
 void free_render_line(RenderLine *rl);
 void render_line_add(RenderLine *rl, attr_t attr, const char *content);
-void render_line_draw(RenderLine *rl, int y, int x);
+void render_line_draw(RenderLine *rl, int y, int x, size_t max_width);
 
 typedef struct render_lines RenderLines;
 RenderLines *new_render_lines();

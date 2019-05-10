@@ -4,6 +4,7 @@
 
 #include "render_lines.h"
 #include "box.h"
+#include "utf8.h"
 
 typedef struct render_span RenderSpan;
 struct render_span {
@@ -51,13 +52,17 @@ void render_line_add(RenderLine *rl, attr_t attr, const char *content) {
   }
 }
 
-void render_line_draw(RenderLine *rl, int y, int x) {
+void render_line_draw(RenderLine *rl, int y, int x, size_t max_width) {
   move(y, x);
 
-  for (RenderSpan *rs = rl->first; rs != NULL; rs = rs->next) {
+  for (RenderSpan *rs = rl->first; rs != NULL && max_width > 0; rs = rs->next) {
+    size_t len = utf8_length(rs->content, max_width, 8);
+
     attron(rs->attr);
-    printw("%s", rs->content);
+    addnstr(rs->content, len);
     attroff(rs->attr);
+
+    max_width -= len;
   }
 }
 
@@ -96,6 +101,6 @@ void render_lines_draw(RenderLines *rls, Box *box) {
   size_t y = 0;
 
   for (RenderLine *rl = rls->first; rl != NULL; rl = rl->next, y++) {
-    render_line_draw(rl, y + box_top(box), box_left(box));
+    render_line_draw(rl, y + box_top(box), box_left(box), box_width(box));
   }
 }

@@ -6,7 +6,7 @@ CFLAGS=-g -I$(IDIR) -pthread -Wall -lm
 SDIR=src
 ODIR=$(SDIR)/obj
 
-LIBS=-lncurses
+LIBS=-lncurses -lutf8proc
 
 _DEPS = rat.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
