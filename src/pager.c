@@ -35,6 +35,7 @@ struct pager {
   size_t cursor;
   Box *box;
   AnnotatorListItem *annotators;
+  EventHandlers *eh;
 
   struct refs refs;
 };
@@ -59,6 +60,8 @@ void free_pager(const struct refs *r) {
     free_box(p->box);
   }
 
+  free_event_handlers(p->eh);
+
   free(p->cmd);
   free(p);
 }
@@ -72,6 +75,7 @@ Pager *new_pager(char *cmd) {
   p->annotators = NULL;
   p->buffer = NULL;
   p->scroll = p->cursor = 0;
+  p->eh = new_event_handlers();
 
   run_pager_command(p);
 
@@ -144,6 +148,14 @@ void pager_add_annotator(Pager *p, Annotator *ar) {
 void pager_reload(Pager *p) {
   cancel_pager_command(p);
   run_pager_command(p);
+}
+
+void pager_add_event_listener(Pager *p, KeySeq *ks, JSEventHandler *jeh) {
+  event_handlers_add(p->eh, ks, jeh);
+}
+
+size_t pager_handle_event(Pager *p, KeySeq *ks) {
+  return event_handlers_handle(p->eh, ks);
 }
 
 void pager_move_cursor_to(Pager *p, ssize_t cursor) {

@@ -3,6 +3,8 @@
 #include "annotator.h"
 #include "buffer.h"
 #include "widget.h"
+#include "key_seq.h"
+#include "event_handlers.h"
 
 typedef struct pager Pager;
 Pager *new_pager(char* cmd);
@@ -15,6 +17,8 @@ void render_pager(Pager *p);
 void set_pager_box(Pager *p, int left, int top, int width, int height);
 void pager_add_annotator(Pager *p, Annotator *ar);
 void pager_reload(Pager *p);
+void pager_add_event_listener(Pager *p, KeySeq *ks, JSEventHandler *jeh);
+size_t pager_handle_event(Pager *p, KeySeq *ks);
 void pager_move_cursor(Pager *p, ssize_t delta);
 void pager_move_cursor_to(Pager *p, ssize_t cursor);
 void pager_scroll(Pager *p, ssize_t delta);

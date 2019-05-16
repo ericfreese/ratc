@@ -40,7 +40,12 @@ void handle_input(int ch) {
 
   key_seq_add(input_buffer, (char*)keyname(ch));
 
-  if ((n = event_handlers_handle(handlers, input_buffer)) > 0) {
+  Pager *focused_pager = pager_stack_top(pagers);
+
+  if (focused_pager != NULL && (n = pager_handle_event(focused_pager, input_buffer)) > 0) {
+    free_key_seq(input_buffer);
+    input_buffer = new_key_seq();
+  } else if ((n = event_handlers_handle(handlers, input_buffer)) > 0) {
     free_key_seq(input_buffer);
     input_buffer = new_key_seq();
   }

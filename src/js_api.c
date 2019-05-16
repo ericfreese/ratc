@@ -88,6 +88,8 @@ JSEventHandler *new_js_event_handler(duk_context *duk_ctx, char *stash_key) {
 
 void js_run_event_handler(JSEventHandler *jeh) {
   fprintf(stderr, "Running handler: '%s'\n", jeh->stash_key);
+
+  /* Put the function from the stash onto the stack and call it */
   duk_push_heap_stash(jeh->ctx);
   duk_get_prop_string(jeh->ctx, -1, jeh->stash_key);
   duk_call(jeh->ctx, 0);
@@ -209,6 +211,55 @@ duk_ret_t js_pager_add_annotator(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_pager_add_event_listener(duk_context *duk_ctx) {
+  if (!duk_is_array(duk_ctx, 0)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an array");
+  }
+
+  duk_size_t len = duk_get_length(duk_ctx, 0);
+  if (len <= 0) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "array must not be empty");
+  }
+
+  if (!duk_is_function(duk_ctx, 1)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "second arg must be a function");
+  }
+
+  KeySeq *ks = new_key_seq();
+
+  for (duk_size_t i = 0; i < len; i++) {
+    duk_get_prop_index(duk_ctx, 0, i);
+
+    if (!duk_is_string(duk_ctx, -1)) {
+      free_key_seq(ks);
+      return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "array must contain only strings");
+    }
+
+    char *keys = cesu8_to_utf8(duk_get_string(duk_ctx, -1));
+    key_seq_add(ks, keys);
+    free((char*)keys);
+
+    duk_pop(duk_ctx);
+  }
+
+  // TODO: Fix this js_get_stash_key usage
+  JSEventHandler *jeh = new_js_event_handler(duk_ctx, js_get_stash_key(ks));
+
+  /* Save a reference to the handler function in the stash */
+  duk_push_heap_stash(duk_ctx);
+  duk_dup(duk_ctx, 1);
+  duk_put_prop_string(duk_ctx, -2, jeh->stash_key);
+  duk_pop(duk_ctx);
+
+  duk_push_this(duk_ctx);
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  pager_add_event_listener(p, ks, jeh);
+
+  return 0;
+}
+
 duk_ret_t js_pager_reload(duk_context *duk_ctx) {
   duk_push_this(duk_ctx);
 
@@ -302,6 +353,9 @@ void js_pager_setup(duk_context *duk_ctx) {
 
   duk_push_c_function(duk_ctx, js_pager_add_annotator, 1);
   duk_put_prop_string(duk_ctx, -2, "addAnnotator");
+
+  duk_push_c_function(duk_ctx, js_pager_add_event_listener, 2);
+  duk_put_prop_string(duk_ctx, -2, "addEventListener");
 
   duk_push_c_function(duk_ctx, js_pager_reload, 1);
   duk_put_prop_string(duk_ctx, -2, "reload");
