@@ -277,3 +277,16 @@ const char* buffer_content(Buffer *b, size_t offset) {
 void buffer_add_annotation(Buffer *b, Annotation *a) {
   annotations_add(b->annotations, a);
 }
+
+Annotation *buffer_annotation_at_line(Buffer *b, const char *type, size_t line) {
+  if (line < 0 || line > b->line_ends->len) {
+    return NULL;
+  }
+
+  return annotations_first_intersecting(
+    b->annotations,
+    type,
+    line > 0 ? b->line_ends->offsets[line - 1] : 0,
+    b->line_ends->offsets[line]
+  );
+}

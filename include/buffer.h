@@ -16,7 +16,8 @@ typedef struct annotations Annotations;
 Annotations *new_annotations();
 void free_annotations(Annotations *as);
 void annotations_add(Annotations *as, Annotation *a);
-Annotations *annotations_intersecting(Annotations *as, uint32_t start, uint32_t end);
+//Annotations *annotations_intersecting(Annotations *as, uint32_t start, uint32_t end);
+Annotation *annotations_first_intersecting(Annotations *as, const char *type, uint32_t start, uint32_t end);
 
 typedef struct buffer Buffer;
 Buffer *new_buffer();
@@ -24,6 +25,7 @@ void free_buffer(Buffer *b);
 void buffer_handle_token(Buffer *b, Token *t);
 RenderLines *get_render_lines(Buffer *b, size_t start, size_t num);
 //void buffer_list_annotations(Buffer *b);
+Annotation *buffer_annotation_at_line(Buffer *b, const char *type, size_t line);
 void buffer_add_annotation(Buffer *b, Annotation *a);
 size_t buffer_len(Buffer *b);
 size_t buffer_num_lines(Buffer *b);

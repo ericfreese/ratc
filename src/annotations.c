@@ -36,14 +36,24 @@ void annotations_add(Annotations *as, Annotation *a) {
   as->len++;
 }
 
-Annotations *annotations_intersecting(Annotations *as, uint32_t start, uint32_t end) {
-  Annotations *asi = new_annotations();
+// Annotations *annotations_intersecting(Annotations *as, uint32_t start, uint32_t end) {
+//   Annotations *asi = new_annotations();
+//
+//   for (size_t i = 0; i < as->len; i++) {
+//     if (annotation_start(as->items[i]) < end && annotation_end(as->items[i]) > start) {
+//       annotations_add(asi, as->items[i]);
+//     }
+//   }
+//
+//   return asi;
+// }
 
+Annotation *annotations_first_intersecting(Annotations *as, const char *type, uint32_t start, uint32_t end) {
   for (size_t i = 0; i < as->len; i++) {
-    if (annotation_start(as->items[i]) < end && annotation_end(as->items[i]) > start) {
-      annotations_add(asi, as->items[i]);
+    if (annotation_start(as->items[i]) < end && annotation_end(as->items[i]) > start && strcmp(annotation_type(as->items[i]), type) == 0) {
+      return as->items[i];
     }
   }
 
-  return asi;
+  return NULL;
 }

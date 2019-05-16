@@ -19,6 +19,7 @@ void pager_add_annotator(Pager *p, Annotator *ar);
 void pager_reload(Pager *p);
 void pager_add_event_listener(Pager *p, KeySeq *ks, JSEventHandler *jeh);
 size_t pager_handle_event(Pager *p, KeySeq *ks);
+Annotation *pager_get_cursor_annotation(Pager *p, const char *type);
 void pager_move_cursor(Pager *p, ssize_t delta);
 void pager_move_cursor_to(Pager *p, ssize_t cursor);
 void pager_scroll(Pager *p, ssize_t delta);

@@ -158,6 +158,10 @@ size_t pager_handle_event(Pager *p, KeySeq *ks) {
   return event_handlers_handle(p->eh, ks);
 }
 
+Annotation *pager_get_cursor_annotation(Pager *p, const char *type) {
+  return buffer_annotation_at_line(p->buffer, type, p->cursor);
+}
+
 void pager_move_cursor_to(Pager *p, ssize_t cursor) {
   if (cursor < 0) {
     p->cursor = 0;

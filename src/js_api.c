@@ -260,6 +260,31 @@ duk_ret_t js_pager_add_event_listener(duk_context *duk_ctx) {
   return 0;
 }
 
+duk_ret_t js_pager_get_cursor_annotation(duk_context *duk_ctx) {
+  if (!duk_is_string(duk_ctx, 0)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "getCursorAnnotation(): first arg must be a string");
+  }
+
+  duk_push_this(duk_ctx);
+  duk_get_prop_string(duk_ctx, -1, DUK_HIDDEN_SYMBOL("__pager__"));
+  Pager *p = duk_get_pointer(duk_ctx, -1);
+
+  char *annotation_type = cesu8_to_utf8(duk_get_string(duk_ctx, 0));
+
+  Annotation *a = pager_get_cursor_annotation(p, annotation_type);
+
+  free((char*)annotation_type);
+
+  /* TODO: encode in cesu-8 before pushing, see note in duktape docs */
+  if (a == NULL) {
+    duk_push_null(duk_ctx);
+  } else {
+    duk_push_string(duk_ctx, annotation_value(a));
+  }
+
+  return 1;
+}
+
 duk_ret_t js_pager_reload(duk_context *duk_ctx) {
   duk_push_this(duk_ctx);
 
@@ -356,6 +381,9 @@ void js_pager_setup(duk_context *duk_ctx) {
 
   duk_push_c_function(duk_ctx, js_pager_add_event_listener, 2);
   duk_put_prop_string(duk_ctx, -2, "addEventListener");
+
+  duk_push_c_function(duk_ctx, js_pager_get_cursor_annotation, 1);
+  duk_put_prop_string(duk_ctx, -2, "getCursorAnnotation");
 
   duk_push_c_function(duk_ctx, js_pager_reload, 1);
   duk_put_prop_string(duk_ctx, -2, "reload");
