@@ -34,4 +34,4 @@ test: $(patsubst $(SDIR)/%.c,%,$(TESTS))
 	for t in $^; do echo $$t; $$t; done
 
 clean:
-	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ 
+	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~
