@@ -385,7 +385,7 @@ void js_pager_setup(duk_context *duk_ctx) {
   duk_push_c_function(duk_ctx, js_pager_get_cursor_annotation, 1);
   duk_put_prop_string(duk_ctx, -2, "getCursorAnnotation");
 
-  duk_push_c_function(duk_ctx, js_pager_reload, 1);
+  duk_push_c_function(duk_ctx, js_pager_reload, 0);
   duk_put_prop_string(duk_ctx, -2, "reload");
 
   duk_push_c_function(duk_ctx, js_pager_move_cursor, 1);
@@ -394,16 +394,16 @@ void js_pager_setup(duk_context *duk_ctx) {
   duk_push_c_function(duk_ctx, js_pager_scroll, 1);
   duk_put_prop_string(duk_ctx, -2, "scroll");
 
-  duk_push_c_function(duk_ctx, js_pager_page_up, 1);
+  duk_push_c_function(duk_ctx, js_pager_page_up, 0);
   duk_put_prop_string(duk_ctx, -2, "pageUp");
 
-  duk_push_c_function(duk_ctx, js_pager_page_down, 1);
+  duk_push_c_function(duk_ctx, js_pager_page_down, 0);
   duk_put_prop_string(duk_ctx, -2, "pageDown");
 
-  duk_push_c_function(duk_ctx, js_pager_first_line, 1);
+  duk_push_c_function(duk_ctx, js_pager_first_line, 0);
   duk_put_prop_string(duk_ctx, -2, "firstLine");
 
-  duk_push_c_function(duk_ctx, js_pager_last_line, 1);
+  duk_push_c_function(duk_ctx, js_pager_last_line, 0);
   duk_put_prop_string(duk_ctx, -2, "lastLine");
 
   duk_put_prop_string(duk_ctx, -2, "prototype");
