@@ -73,6 +73,49 @@ void install_winch_handler() {
   }
 }
 
+char *rat_config_filename() {
+  char *filename = NULL;
+  const char *base;
+
+  if ((base = getenv("XDG_CONFIG_HOME")) == NULL) {
+    base = getenv("HOME");
+  }
+
+  if (base == NULL) {
+    /* TODO: Try some more ways to get the home dir, ex: getpwuid(getuid())->pw_dir */
+    return NULL;
+  }
+
+  /* TODO: handle different dir separators? */
+  int len = snprintf(NULL, 0, "%s/.config/ratc/ratc.js", base);
+  filename = malloc(len + 1);
+  sprintf(filename, "%s/.config/ratc/ratc.js", base);
+
+  return filename;
+}
+
+char *rat_get_file_contents(const char *filename) {
+  char *contents = NULL;
+  long len;
+  FILE *f = fopen(filename, "r");
+
+  if (f) {
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    contents = malloc(len + 1);
+
+    if (contents) {
+      fread(contents, 1, len, f);
+      contents[len] = '\0';
+    }
+
+    fclose(f);
+  }
+
+  return contents;
+}
+
 void rat_init() {
   setlocale(LC_ALL, "");
   initscr();
@@ -92,73 +135,11 @@ void rat_init() {
 
   io_init(handle_input);
 
-  duk_eval_string_noresult(duk_ctx,
-    "var logger = new Rat.Pager('git llll');"
-    "logger.addAnnotator(new Rat.Annotator('./test-annotator pager | tee >(xxd >> debug.log)', 'bar'));"
-    "Rat.push(logger);"
-
-    "Rat.addEventListener(['p'], function() {"
-      "var p = new Rat.Pager('for i ({1..15}); do echo foo; sleep 1; done');"
-      "p.addAnnotator(new Rat.Annotator('./test-annotator foo | tee >(xxd >> debug.log)', 'bar'));"
-      "Rat.push(p);"
-    "});"
-
-    "Rat.addEventListener(['d'], function() {"
-      "var p = new Rat.Pager('git diff --no-color');"
-      "p.addAnnotator(new Rat.Annotator('./test-annotator pager | tee >(xxd >> debug.log)', 'bar'));"
-      "Rat.push(p);"
-    "});"
-
-    "Rat.addEventListener(['l'], function() {"
-      "var p = new Rat.Pager('git llll --no-color');"
-      "p.addAnnotator(new Rat.Annotator('./test-annotator pager | tee >(xxd >> debug.log)', 'bar'));"
-      "Rat.push(p);"
-    "});"
-
-    "Rat.addEventListener(['a'], function() {"
-      "Rat.getActivePager().addAnnotator(new Rat.Annotator('./test-annotator foo | tee >(xxd >> debug.log)', 'bar'));"
-    "});"
-
-    "Rat.addEventListener(['^R'], function() {"
-      "Rat.getActivePager().reload();"
-    "});"
-
-    "Rat.addEventListener(['j'], function() {"
-      "Rat.getActivePager().moveCursor(1);"
-    "});"
-
-    "Rat.addEventListener(['k'], function() {"
-      "Rat.getActivePager().moveCursor(-1);"
-    "});"
-
-    "Rat.addEventListener(['^E'], function() {"
-      "Rat.getActivePager().scroll(1);"
-    "});"
-
-    "Rat.addEventListener(['^Y'], function() {"
-      "Rat.getActivePager().scroll(-1);"
-    "});"
-
-    "Rat.addEventListener(['^D'], function() {"
-      "Rat.getActivePager().pageDown();"
-    "});"
-
-    "Rat.addEventListener(['^U'], function() {"
-      "Rat.getActivePager().pageUp();"
-    "});"
-
-    "Rat.addEventListener(['g', 'g'], function() {"
-      "Rat.getActivePager().firstLine();"
-    "});"
-
-    "Rat.addEventListener(['G'], function() {"
-      "Rat.getActivePager().lastLine();"
-    "});"
-
-    "Rat.addEventListener(['q'], function() {"
-      "Rat.pop();"
-    "});"
-  );
+  const char *filename = rat_config_filename();
+  const char *js = rat_get_file_contents(filename);
+  duk_eval_string_noresult(duk_ctx, js);
+  free((char*)js);
+  free((char*)filename);
 }
 
 void rat_cleanup() {
