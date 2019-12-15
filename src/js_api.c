@@ -298,7 +298,7 @@ duk_ret_t js_pager_reload(duk_context *duk_ctx) {
 
 duk_ret_t js_pager_move_cursor(duk_context *duk_ctx) {
   if (!duk_is_number(duk_ctx, 0)) {
-    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an number");
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be a number");
   }
 
   duk_push_this(duk_ctx);
@@ -313,7 +313,7 @@ duk_ret_t js_pager_move_cursor(duk_context *duk_ctx) {
 
 duk_ret_t js_pager_scroll(duk_context *duk_ctx) {
   if (!duk_is_number(duk_ctx, 0)) {
-    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be an number");
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be a number");
   }
 
   duk_push_this(duk_ctx);
