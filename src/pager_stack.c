@@ -97,9 +97,13 @@ void pager_stack_pop(PagerStack *ps) {
   pager_stack_print(ps, "after pop");
 }
 
-Pager *pager_stack_top(PagerStack *ps) {
-  if (ps->last) {
-    return ps->last->pager;
+Pager *pager_stack_get(PagerStack *ps, ssize_t offset) {
+  PagerStackItem *psi;
+
+  for (psi = ps->last; psi && offset; psi = psi->previous, offset--);
+
+  if (!offset && psi) {
+    return psi->pager;
   }
 
   return NULL;

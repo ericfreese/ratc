@@ -493,6 +493,22 @@ duk_ret_t js_get_active_pager(duk_context *duk_ctx) {
   return 1;
 }
 
+duk_ret_t js_get_pager(duk_context *duk_ctx) {
+  if (!duk_is_number(duk_ctx, 0)) {
+    return duk_error(duk_ctx, DUK_ERR_TYPE_ERROR, "first arg must be a number");
+  }
+
+  Pager *p = rat_get_pager(duk_get_int(duk_ctx, 0));
+
+  char *stash_key = js_get_stash_key(p);
+
+  duk_push_heap_stash(duk_ctx);
+  duk_get_prop_string(duk_ctx, -1, stash_key);
+
+  free(stash_key);
+  return 1;
+}
+
 void js_rat_setup(duk_context *duk_ctx) {
   duk_push_object(duk_ctx);
 
@@ -513,6 +529,9 @@ void js_rat_setup(duk_context *duk_ctx) {
 
   duk_push_c_function(duk_ctx, js_get_active_pager, 0);
   duk_put_prop_string(duk_ctx, -2, "getActivePager");
+
+  duk_push_c_function(duk_ctx, js_get_pager, 1);
+  duk_put_prop_string(duk_ctx, -2, "getPager");
 
   duk_put_global_string(duk_ctx, "Rat");
 }

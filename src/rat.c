@@ -40,7 +40,7 @@ void handle_input(int ch) {
 
   key_seq_add(input_buffer, (char*)keyname(ch));
 
-  Pager *focused_pager = pager_stack_top(pagers);
+  Pager *focused_pager = pager_stack_get(pagers, 0);
 
   if (focused_pager != NULL && (n = pager_handle_event(focused_pager, input_buffer)) > 0) {
     free_key_seq(input_buffer);
@@ -160,7 +160,11 @@ void rat_pop_pager() {
 }
 
 Pager *rat_active_pager() {
-  return pager_stack_top(pagers);
+  return pager_stack_get(pagers, 0);
+}
+
+Pager *rat_get_pager(ssize_t offset) {
+  return pager_stack_get(pagers, offset);
 }
 
 void rat_add_event_listener(KeySeq *trigger, JSEventHandler *jeh) {
