@@ -41,7 +41,10 @@ KeySeq *new_key_seq() {
 }
 
 void free_key_seq(KeySeq *ks) {
-  for (KeySeqItem *cursor = ks->first; cursor != NULL; cursor = cursor->next) {
+  KeySeqItem *next;
+
+  for (KeySeqItem *cursor = ks->first; cursor != NULL; cursor = next) {
+    next = cursor->next;
     free_key_seq_item(cursor);
   }
 
