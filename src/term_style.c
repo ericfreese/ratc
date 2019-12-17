@@ -58,6 +58,7 @@ TermStyle *new_term_style() {
   TermStyle *ts = malloc(sizeof *ts);
 
   ts->fg = ts->bg = -1;
+  ts->bold = ts->underline = ts->reverse = 0;
 
   return ts;
 }
@@ -67,16 +68,33 @@ TermStyle *term_style_dup(TermStyle *ts) {
 
   dup->fg = ts->fg;
   dup->bg = ts->bg;
+  dup->bold = ts->bold;
+  dup->underline = ts->underline;
+  dup->reverse = ts->reverse;
 
   return dup;
 }
 
 int term_style_is_default(TermStyle *ts) {
-  return ts->fg == -1 && ts->bg == -1;
+  return ts->fg == -1 && ts->bg == -1 && !ts->bold && !ts->underline && !ts->reverse;
 }
 
 attr_t term_style_to_attr(TermStyle *ts) {
-  return COLOR_PAIR(color_pair_get(ts->fg, ts->bg));
+  attr_t a = COLOR_PAIR(color_pair_get(ts->fg, ts->bg));
+
+  if (ts->bold) {
+    a |= A_BOLD;
+  }
+
+  if (ts->underline) {
+    a |= A_UNDERLINE;
+  }
+
+  if (ts->reverse) {
+    a |= A_REVERSE;
+  }
+
+  return a;
 }
 
 void term_style_apply(TermStyle *ts, EscSeq *es) {
@@ -111,16 +129,49 @@ void term_style_apply(TermStyle *ts, EscSeq *es) {
 
   if (sgr->len == 0) {
     new_fg = new_bg = -1;
+    ts->bold = ts->underline = ts->reverse = 0;
   }
 
   for (SgrCode *sc = sgr->first; sc != NULL; sc = sc->next) {
-    // TODO: Support the rest
     if (sc->code == 0) {
       new_fg = new_bg = -1;
+      ts->bold = ts->underline = ts->reverse = 0;
+    } else if (sc->code == 1) {
+      ts->bold = 1;
+    } else if (sc->code == 4) {
+      ts->underline = 1;
+    } else if (sc->code == 7) {
+      ts->reverse = 1;
+    } else if (sc->code == 22) {
+      ts->bold = 0;
+    } else if (sc->code == 24) {
+      ts->underline = 0;
+    } else if (sc->code == 27) {
+      ts->reverse = 0;
     } else if (sc->code >= 30 && sc->code <= 37) {
       new_fg = sc->code - 30;
+    } else if (sc->code == 38) {
+      sc = sc->next;
+      if (sc != NULL && sc->code == 5) {
+        sc = sc->next;
+        if (sc != NULL) {
+          new_fg = sc->code;
+        }
+      }
+    } else if (sc->code == 39) {
+      new_fg = -1;
     } else if (sc->code >= 40 && sc->code <= 47) {
       new_bg = sc->code - 40;
+    } else if (sc->code == 48) {
+      sc = sc->next;
+      if (sc != NULL && sc->code == 5) {
+        sc = sc->next;
+        if (sc != NULL) {
+          new_bg = sc->code;
+        }
+      }
+    } else if (sc->code == 49) {
+      new_bg = -1;
     }
   }
 

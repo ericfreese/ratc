@@ -9,6 +9,9 @@ typedef struct term_style TermStyle;
 struct term_style {
   NCURSES_COLOR_T fg;
   NCURSES_COLOR_T bg;
+  int bold;
+  int underline;
+  int reverse;
 };
 
 TermStyle *new_term_style();
