@@ -89,7 +89,7 @@ void highlights_start(Highlights *hs, TermStyle *ts, size_t offset) {
     return;
   }
 
-  fprintf(stderr, "highlighting termstyle: fg='%d', bg='%d'\n", ts->fg, ts->bg);
+  // fprintf(stderr, "highlighting termstyle: fg='%d', bg='%d'\n", ts->fg, ts->bg);
 
   Highlight *h = malloc(sizeof *h);
 
